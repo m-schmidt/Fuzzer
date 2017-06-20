@@ -1,0 +1,24 @@
+name:                fuzzer
+version:             0.1.0.0
+homepage:            https://github.com/m-schmidt/fuzzer#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Michael Schmidt
+maintainer:          github@mschmidt.me
+copyright:           2017 Michael Schmidt
+category:            Development
+build-type:          Simple
+cabal-version:       >=1.10
+extra-source-files:  README.md
+
+executable fuzzer
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  other-modules:       Check
+                     , Expression
+                     , ExpressionTest
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
+                     , directory
+                     , process
+                     , QuickCheck
