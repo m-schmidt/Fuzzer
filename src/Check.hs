@@ -1,13 +1,11 @@
 module Check (checkIt) where
 
-import Expression
 import ExpressionTest
 import System.Directory
 import System.Exit
 import System.IO
 import System.Process
 import Test.QuickCheck
-import Test.QuickCheck.Monadic
 
 
 -- |Run external test script on generated 'input' C program and return whether exit code of script was OK.

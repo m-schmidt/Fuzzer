@@ -68,13 +68,13 @@ data Expr
 -- |Print expressions in C syntax
 instance Show Expr where
   show e = case e of
-      UnExpr o e      -> show o ++ showSub e
+      UnExpr o x      -> show o ++ showSub x
       BinExpr o e1 e2 -> showSub e1 ++ show o ++ showSub e2
       Value i         -> printConstant i
       Variable n _    -> n
     where
       showSub (Value i) = printConstant i
-      showSub e         = "(" ++ show e ++ ")"
+      showSub x         = "(" ++ show x ++ ")"
       printConstant i   = "0x" ++ showHex i "ULL"
 
 

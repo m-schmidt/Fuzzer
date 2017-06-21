@@ -9,12 +9,16 @@ import Test.QuickCheck.Monadic
 
 
 -- |Random expressions
-instance Arbitrary Expr where
-  arbitrary = sized expr
+newtype TExpr = TExpr Expr
+  deriving Show
+
+instance Arbitrary TExpr where
+  arbitrary = TExpr <$> (sized expr)
     where
       expr :: Int -> Gen Expr
       expr 0         = oneof [e_valSmall, e_valBig, e_varSmall, e_varBig]
       expr n | n > 0 = oneof [e_unOp n, e_arithOp1 n, e_arithOp2 n, e_shiftOp n, e_bitOp n]
+      expr _         = undefined
 
       -- small and large immediate numbers
       e_valSmall   = Value <$> elements shift_amounts
@@ -46,15 +50,15 @@ instance Arbitrary Expr where
 
 
 -- |Proposition that evaluating expressions works
-evalExpressionCorrect :: (String -> IO Bool) -> Expr -> Property
+evalExpressionCorrect :: (String -> IO Bool) -> TExpr -> Property
 evalExpressionCorrect runTest e = monadicIO $ do
   result <- run $ runTest . genCode $ e
   assert (result == True)
 
 
 -- |Generates an output program that tests the given expression
-genCode :: Expr -> String
-genCode e = concat [includes, globVars, code0, exprCode, code1, exprValue, code2]
+genCode :: TExpr -> String
+genCode (TExpr e) = concat [includes, globVars, code0, exprCode, code1, exprValue, code2]
   where
     includes       = "#include <stdio.h>\n"
     globVars       = unlines $ map globVar $ variables e
