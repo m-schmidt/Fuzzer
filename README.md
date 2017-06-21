@@ -7,8 +7,8 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
 - Clone the repository and within the project directory type:
 
-    $ stack setup
-    $ stack build
+      $ stack setup
+      $ stack build
 
 ## Usage
 
@@ -16,4 +16,4 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
 - To start the fuzzer, type:
 
-    $ stack exec fuzzer
+      $ stack exec fuzzer
