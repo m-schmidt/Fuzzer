@@ -38,7 +38,7 @@ instance Arbitrary TExpr where
 
       -- expression that does not evaluate to zero
       e_divisor n  = suchThat (expr n) (\e -> eval e /= Just 0)
-      -- expression that does not evaluate to zero
+      -- shift amounts as variable or immediate
       e_amount     = oneof [e_valSmall, e_varSmall]
 
       -- powers of two
