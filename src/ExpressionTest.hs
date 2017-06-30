@@ -56,7 +56,7 @@ evalExpressionCorrect runTest e = monadicIO $ do
   assert (result == True)
 
 
--- |Generates an output program that tests the given expression
+-- |Generates a C program that tests evaluating the given expression
 genCode :: TExpr -> String
 genCode (TExpr e) = concat [includes, globVars, code0, exprCode, code1, exprValue, code2]
   where
