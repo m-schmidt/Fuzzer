@@ -17,7 +17,7 @@ runTestScript input = do
   hPutStr tmpHandle input
   hClose tmpHandle
   -- run test script on input
-  (code, _, _) <- readProcessWithExitCode "test.sh" [tmpName] ""
+  (code, _, _) <- readProcessWithExitCode "./test.sh" [tmpName] ""
   -- cleanup
   removeFile tmpName
   -- check exit code
