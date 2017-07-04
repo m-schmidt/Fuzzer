@@ -57,10 +57,39 @@ binop o =
     wrap f x i = f x (fromIntegral i)
 
 
+-- |Conditions
+data Condition = Equal | NotEqual | LessThan | GreaterThan | LessOrEqual | GreaterOrEqual deriving Eq
+
+-- |Print operation in C syntax
+instance Show Condition where
+  show o = case o of
+    Equal          -> " == "
+    NotEqual       -> " != "
+    LessThan       -> " < "
+    GreaterThan    -> " > "
+    LessOrEqual    -> " <= "
+    GreaterOrEqual -> " >= "
+
+-- |Operation semantics
+condop :: Condition -> Word64 -> Word64 -> Bool
+condop o = case o of
+    Equal          -> (==)
+    NotEqual       -> (/=)
+    LessThan       -> (<)
+    GreaterThan    -> (>)
+    LessOrEqual    -> (<=)
+    GreaterOrEqual -> (>=)
+
+if' :: Bool -> a -> a -> a
+if' True  x _ = x
+if' False _ y = y
+
+
 -- |Expressions
 data Expr
   = UnExpr UnOp Expr
   | BinExpr BinOp Expr Expr
+  | CondExpr Condition Expr Expr Expr Expr
   | Value Word64
   | Variable String Word64
   deriving Eq
@@ -68,10 +97,11 @@ data Expr
 -- |Print expressions in C syntax
 instance Show Expr where
   show e = case e of
-      UnExpr o x      -> show o ++ showSub x
-      BinExpr o e1 e2 -> showSub e1 ++ show o ++ showSub e2
-      Value i         -> printConstant i
-      Variable n _    -> n
+      UnExpr o x             -> show o ++ showSub x
+      BinExpr o e1 e2        -> showSub e1 ++ show o ++ showSub e2
+      CondExpr o e1 e2 e3 e4 -> showSub e1 ++ show o ++ showSub e2 ++ " ? " ++ showSub e3 ++ " : " ++ showSub e4
+      Value i                -> printConstant i
+      Variable n _           -> n
     where
       showSub (Value i) = printConstant i
       showSub x         = "(" ++ show x ++ ")"
@@ -81,12 +111,13 @@ instance Show Expr where
 -- |Evaluate an expression, handle error cases
 eval :: Expr -> Maybe Word64
 eval expr = case expr of
-    UnExpr o e        -> Just (unop o) <*> eval e
-    BinExpr Div e1 e2 -> Just (binop Div) <*> eval e1 <*> (eval e2 >>= catchZero)
-    BinExpr Mod e1 e2 -> Just (binop Mod) <*> eval e1 <*> (eval e2 >>= catchZero)
-    BinExpr o e1 e2   -> Just (binop o) <*> eval e1 <*> eval e2
-    Value i           -> Just i
-    Variable _ i      -> Just i
+    UnExpr o e             -> unop o <$> eval e
+    BinExpr Div e1 e2      -> binop Div <$> eval e1 <*> (eval e2 >>= catchZero)
+    BinExpr Mod e1 e2      -> binop Mod <$> eval e1 <*> (eval e2 >>= catchZero)
+    BinExpr o e1 e2        -> binop o <$> eval e1 <*> eval e2
+    CondExpr o e1 e2 e3 e4 -> if' <$> (condop o <$> eval e1 <*> eval e2) <*> eval e3 <*> eval e4
+    Value i                -> Just i
+    Variable _ i           -> Just i
   where
     catchZero 0 = Nothing
     catchZero n = Just n
