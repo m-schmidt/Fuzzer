@@ -17,7 +17,7 @@ instance Arbitrary TExpr where
     where
       expr :: Int -> Gen Expr
       expr 0         = oneof [e_valSmall, e_valBig, e_varSmall, e_varBig]
-      expr n | n > 0 = oneof [e_unOp n, e_arithOp1 n, e_arithOp2 n, e_shiftOp n, e_bitOp n]
+      expr n | n > 0 = oneof [e_unOp n, e_arithOp1 n, e_arithOp2 n, e_shiftOp n, e_bitOp n, e_cond n]
       expr _         = undefined
 
       -- small and large immediate numbers
@@ -35,6 +35,11 @@ instance Arbitrary TExpr where
       e_arithOp2 n = BinExpr <$> elements [Div, Mod] <*> (expr $ n `div` 2) <*> (e_divisor $ n `div` 2)
       e_shiftOp n  = BinExpr <$> elements [Shl, Shr] <*> (expr $ n `div` 2) <*> e_amount
       e_bitOp n    = BinExpr <$> elements [And, Or, Xor] <*> (expr $ n `div` 2) <*> (expr $ n `div` 2)
+      e_cond n     = CondExpr <$> elements [Equal, NotEqual, LessThan, GreaterThan, LessOrEqual, GreaterOrEqual]
+                              <*> (expr $ n `div` 2)
+                              <*> (expr $ n `div` 2)
+                              <*> (expr $ n `div` 2)
+                              <*> (expr $ n `div` 2)
 
       -- expression that does not evaluate to zero
       e_divisor n  = suchThat (expr n) (\e -> eval e /= Just 0)
