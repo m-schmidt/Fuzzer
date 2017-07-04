@@ -38,8 +38,8 @@ instance Arbitrary TExpr where
       e_cond n     = CondExpr <$> elements [Equal, NotEqual, LessThan, GreaterThan, LessOrEqual, GreaterOrEqual]
                               <*> (expr $ n `div` 2)
                               <*> (expr $ n `div` 2)
-                              <*> (expr $ n `div` 2)
-                              <*> (expr $ n `div` 2)
+                              <*> (expr $ n-1)
+                              <*> (expr $ n-1)
 
       -- expression that does not evaluate to zero
       e_divisor n  = suchThat (expr n) (\e -> eval e /= Just 0)
