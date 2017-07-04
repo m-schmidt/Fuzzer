@@ -126,7 +126,8 @@ eval expr = case expr of
 -- |Extract variable name/value pairs used in an expression
 variables :: Expr -> [(String, Word64)]
 variables expr = nub $ case expr of
-    UnExpr _ e      -> variables e
-    BinExpr _ e1 e2 -> variables e1 ++ variables e2
-    Variable n i    -> [(n, i)]
-    _               -> []
+    UnExpr _ e             -> variables e
+    BinExpr _ e1 e2        -> variables e1 ++ variables e2
+    CondExpr _ e1 e2 e3 e4 -> variables e1 ++ variables e2 ++ variables e3 ++ variables e4
+    Variable n i           -> [(n, i)]
+    _                      -> []
