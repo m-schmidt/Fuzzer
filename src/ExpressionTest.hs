@@ -54,6 +54,8 @@ instance Arbitrary TExpr where
       shift_amounts = [1,7..42]
 
   shrink (TExpr (UnExpr o e)) = TExpr <$> [e] ++ [UnExpr o e' | (TExpr e') <- shrink (TExpr e)]
+  shrink (TExpr (BinExpr Div e1 e2)) = TExpr <$> [e1, e2] ++ [BinExpr Div e1' e2' | (TExpr e1', TExpr e2') <- shrink (TExpr e1, TExpr e2), eval e2' /= Nothing]
+  shrink (TExpr (BinExpr Mod e1 e2)) = TExpr <$> [e1, e2] ++ [BinExpr Mod e1' e2' | (TExpr e1', TExpr e2') <- shrink (TExpr e1, TExpr e2), eval e2' /= Nothing]
   shrink (TExpr (BinExpr o e1 e2)) = TExpr <$> [e1, e2] ++ [BinExpr o e1' e2' | (TExpr e1', TExpr e2') <- shrink (TExpr e1, TExpr e2)]
   shrink (TExpr (CondExpr o e1 e2 e3 e4)) = TExpr <$> [e1, e2, e3, e4] ++ [CondExpr o e1' e2' e3' e4' | (TExpr e1', TExpr e2', TExpr e3', TExpr e4') <- shrink (TExpr e1, TExpr e2, TExpr e3, TExpr e4)]
   shrink (TExpr _) = []
