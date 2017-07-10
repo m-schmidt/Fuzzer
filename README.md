@@ -17,3 +17,11 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 - To start the fuzzer, type:
 
       $ stack exec fuzzer
+
+- The fuzzer supports some commandline options to select a datatype and a test count. See the online help with:
+
+      $ stack exec fuzzer -- -h
+
+- To run at most `100` tests with expressions based on `32bit unsigned integers`:
+
+      $ stack exec fuzzer -- -t uint32 -c 100
