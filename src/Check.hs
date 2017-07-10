@@ -1,5 +1,11 @@
-module Check (checkIt) where
+module Check
+  ( checkWord64
+  , checkWord32
+  , checkWord16
+  , checkWord8
+  ) where
 
+import Data.Word
 import ExpressionTest
 import System.Directory
 import System.Exit
@@ -24,6 +30,29 @@ runTestScript input = do
   return $ code == ExitSuccess
 
 
+-- |Evaluation of expressions over unsigned integer data types
+evalWord64Correct :: Expr Word64 -> Property
+evalWord64Correct = evalExpressionCorrect runTestScript
+
+evalWord32Correct :: Expr Word32 -> Property
+evalWord32Correct = evalExpressionCorrect runTestScript
+
+evalWord16Correct :: Expr Word16 -> Property
+evalWord16Correct = evalExpressionCorrect runTestScript
+
+evalWord8Correct :: Expr Word8 -> Property
+evalWord8Correct = evalExpressionCorrect runTestScript
+
+
 -- |Run up to 'n' random tests.
-checkIt :: Int -> IO ()
-checkIt n = quickCheckWith stdArgs { maxSuccess=n } (evalExpressionCorrect runTestScript)
+checkWord64 :: Int -> IO ()
+checkWord64 count = quickCheckWith stdArgs { maxSuccess=count } evalWord64Correct
+
+checkWord32 :: Int -> IO ()
+checkWord32 count = quickCheckWith stdArgs { maxSuccess=count } evalWord32Correct
+
+checkWord16 :: Int -> IO ()
+checkWord16 count = quickCheckWith stdArgs { maxSuccess=count } evalWord16Correct
+
+checkWord8 :: Int -> IO ()
+checkWord8 count = quickCheckWith stdArgs { maxSuccess=count } evalWord8Correct
