@@ -9,8 +9,8 @@ import Test.QuickCheck
 
 -- |Base types for expressions
 class Show a => ExprBase a where
-  bitWidth :: a -> Int             -- ^ width of type in bits
-  printType :: a -> String         -- ^ corresponding C data type
+  bitWidth :: a -> Int             -- ^ width of C data type in bits
+  printType :: a -> String         -- ^ print corresponding C data type
   printConstant :: a -> String     -- ^ print value as constant in C syntax
 
 instance ExprBase Word64 where
@@ -166,7 +166,7 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
         where
           -- immediate constants/variable from range suitable as shift amount
           immAmount = Value <$> elements amounts
-          amounts   = [ fromIntegral sh | sh <- [1,3..63], sh < bitWidth bits]
+          amounts   = [ fromIntegral sh | sh <- [1,4..63], sh < bitWidth bits]
 
           -- immediate constants/variable from full range of data type
           immAny    = Value <$> elements (powers ++ powers_m1)
@@ -209,7 +209,7 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
             <*> (expr bits $ n-1)
             <*> (expr bits $ n-1)
 
-  -- |Shrink an expression into smaller expression
+  -- |Shrink an expression into smaller expressions
   shrink expr = filter ((/= Nothing) . eval) $ case expr of
     UnExpr o e             -> [e] ++ [UnExpr o e' | e' <- shrink e]
     BinExpr o e1 e2        -> [e1, e2] ++ [BinExpr o e1' e2' | (e1', e2') <- shrink (e1, e2)]
