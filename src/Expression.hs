@@ -218,3 +218,11 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
     BinExpr o e1 e2        -> [e1, e2] ++ [BinExpr o e1' e2' | (e1', e2') <- shrink (e1, e2)]
     CondExpr o e1 e2 e3 e4 -> [e1, e2, e3, e4] ++ [CondExpr o e1' e2' e3' e4' | (e1', e2', e3', e4') <- shrink (e1, e2, e3, e4)]
     _                      -> []
+
+
+-- |Expressions
+data ExprList a = ExprList [Expr a] deriving (Eq, Show)
+
+instance (Integral a, Bits a, ExprBase a) => Arbitrary (ExprList a) where
+  arbitrary = ExprList <$> vector 42
+  shrink (ExprList xs) = map (\x -> ExprList [x]) xs

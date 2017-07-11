@@ -28,16 +28,16 @@ runTestScript input = do
 
 
 -- |Evaluation of expressions over unsigned integer data types
-evalWord64Correct :: Expr Word64 -> Property
+evalWord64Correct :: ExprList Word64 -> Property
 evalWord64Correct = evalExpressionCorrect runTestScript
 
-evalWord32Correct :: Expr Word32 -> Property
+evalWord32Correct :: ExprList Word32 -> Property
 evalWord32Correct = evalExpressionCorrect runTestScript
 
-evalWord16Correct :: Expr Word16 -> Property
+evalWord16Correct :: ExprList Word16 -> Property
 evalWord16Correct = evalExpressionCorrect runTestScript
 
-evalWord8Correct :: Expr Word8 -> Property
+evalWord8Correct :: ExprList Word8 -> Property
 evalWord8Correct = evalExpressionCorrect runTestScript
 
 

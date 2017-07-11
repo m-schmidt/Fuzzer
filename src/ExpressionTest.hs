@@ -12,23 +12,51 @@ import Text.Printf
 
 
 -- |Proposition that evaluating expressions works
-evalExpressionCorrect :: (Integral a, Bits a, ExprBase a) => (String -> IO Bool) -> Expr a -> Property
-evalExpressionCorrect runTest expr = monadicIO $ do
-  result <- run $ runTest . genCode $ expr
+evalExpressionCorrect :: (Integral a, Bits a, ExprBase a) => (String -> IO Bool) -> ExprList a -> Property
+evalExpressionCorrect runTest el = monadicIO $ do
+  result <- run $ runTest . genCode $ el
   assert (result == True)
 
 
 -- |Generates a C program that tests evaluating the given expression
-genCode :: (Integral a, Bits a, ExprBase a) => Expr a -> String
-genCode expr = concat [includes, globals, main]
+genCode :: (Integral a, Bits a, ExprBase a) => ExprList a -> String
+genCode (ExprList xs) = concat [includes, functions, main]
   where
-    includes      = "#include <stdio.h>\n\n"
-    globals       = unlines $ map global $ variables expr
-    global (n, v) = printf "static volatile %s %s = %s;" (printType v) n (printConstant v)
-    exprVal       = fromJust $ eval expr
-    main          = printf "\n\
-                           \int main (void)\n\
-                           \{\n\
-                           \    %s expr = %s;\n\
-                           \    return (expr != %s);\n\
-                           \}\n" (printType exprVal) (show expr) (printConstant exprVal)
+    includes  = "#include <stdio.h>\n\n"
+    functions = unlines $ map function $ zip xs [1..]
+
+    -- declaration for local variables
+    decl :: (Integral a, Bits a, ExprBase a) => (String, a) -> String
+    decl (n, v)     = printf "    volatile %s %s = %s;\n" (printType v) n (printConstant v)
+
+    -- test function for a single expression
+    function :: (Integral a, Bits a, ExprBase a) => (Expr a, Int) -> String
+    function (x, n) =
+      let xVal  = fromJust $ eval x
+          decls = concat $ map decl $ variables x
+      in
+        printf "int test%d(void)\n\
+               \{\n\
+               \%s\
+               \    %s expr = %s;\n\
+               \    return (expr != %s);\n\
+               \}\n"
+               n
+               decls
+               (printType xVal)
+               (show x)
+               (printConstant xVal)
+
+    -- code to call n test functions
+    testcalls :: Int -> String
+    testcalls n = concat $ map (printf "    if (test%d() != 0) return 1;\n") [1..n]
+
+    -- code for the main function
+    main :: String
+    main = printf "\n\
+                  \int main (void)\n\
+                  \{\n\
+                  \%s\n\
+                  \    return 0;\n\
+                  \}\n"
+                  (testcalls $ length xs)
