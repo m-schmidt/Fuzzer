@@ -29,6 +29,6 @@ genCode expr = concat [includes, globals, main]
     main          = printf "\n\
                            \int main (void)\n\
                            \{\n\
-                           \    %s = %s;\n\
+                           \    %s expr = %s;\n\
                            \    return (expr != %s);\n\
                            \}\n" (printType exprVal) (show expr) (printConstant exprVal)
