@@ -12,7 +12,7 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
 ## Usage
 
-- Create a test script `test.sh` in the current working directory and make it executable. The fuzzer calls this script with the generated C programs. The exit code should success or failure.
+- Create a test script `test.sh` in the current working directory and make it executable. The fuzzer calls this script with the generated C programs. The exit code should indicate success or failure.
 
 - To start the fuzzer, type:
 

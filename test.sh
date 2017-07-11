@@ -4,4 +4,4 @@
 INPUTFILE=$1
 
 # ..add your tests here, exit with zero/non-zero for success/failure...
-exit 1
+exit 0
