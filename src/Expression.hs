@@ -117,13 +117,16 @@ data Expr a
   deriving Eq
 
 instance (Integral a, Bits a, ExprBase a) => Show (Expr a) where
-  show expr = case expr of
-      UnExpr o e             -> show o ++ showSub e
-      BinExpr o e1 e2        -> showSub e1 ++ show o ++ showSub e2
-      CondExpr o e1 e2 e3 e4 -> showSub e1 ++ show o ++ showSub e2 ++ " ? " ++ showSub e3 ++ " : " ++ showSub e4
-      Value i                -> printConstant i
-      Variable n _           -> n
+  show = showExpr 0
     where
+      showExpr :: (Integral a, Bits a, ExprBase a) => a -> Expr a -> String
+      showExpr v expr = case expr of
+        UnExpr o e             -> "(" ++ printType v ++ ")(" ++ show o ++ showSub e ++ ")"
+        BinExpr o e1 e2        -> "(" ++ printType v ++ ")(" ++ showSub e1 ++ show o ++ showSub e2 ++ ")"
+        CondExpr o e1 e2 e3 e4 -> showSub e1 ++ show o ++ showSub e2 ++ " ? " ++ showSub e3 ++ " : " ++ showSub e4
+        Value i                -> printConstant i
+        Variable n _           -> n
+
       showSub :: (Integral a, Bits a, ExprBase a) => Expr a -> String
       showSub (Value i) = printConstant i
       showSub x         = "(" ++ show x ++ ")"
