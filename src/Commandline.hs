@@ -38,9 +38,9 @@ defaultOptions :: Options
 defaultOptions     = Options
   { optType        = UINT64
   , optTypeRaw     = ""
-  , optCount       = 1024
+  , optCount       = 100
   , optCountRaw    = ""
-  , optSize        = 100
+  , optSize        = 30
   , optSizeRaw     = ""
   , optShowHelp    = False
   }
