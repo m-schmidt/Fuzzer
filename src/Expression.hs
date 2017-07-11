@@ -1,7 +1,7 @@
 module Expression where
 
 import Data.Bits as Bit
-import Data.List
+import qualified Data.Set as Set
 import Data.Word
 import Numeric
 import Test.QuickCheck
@@ -147,13 +147,15 @@ eval expr = case expr of
 
 
 -- |Extract variable name/value pairs used in an expression
-variables :: Eq a => Expr a -> [(String, a)]
-variables expr = nub $ case expr of
-    UnExpr _ e             -> variables e
-    BinExpr _ e1 e2        -> variables e1 ++ variables e2
-    CondExpr _ e1 e2 e3 e4 -> variables e1 ++ variables e2 ++ variables e3 ++ variables e4
-    Variable n i           -> [(n, i)]
-    _                      -> []
+variables :: (Eq a, Ord a) => Expr a -> [(String, a)]
+variables = Set.toAscList . go Set.empty
+  where
+    go s expr = case expr of
+      UnExpr _ e             -> go s e
+      BinExpr _ e1 e2        -> foldl go s [e1, e2]
+      CondExpr _ e1 e2 e3 e4 -> foldl go s [e1, e2, e3, e4]
+      Variable n i           -> Set.insert (n, i) s
+      _                      -> s
 
 
 -- |Random expressions for QuickCheck
