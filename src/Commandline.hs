@@ -62,7 +62,7 @@ options =
       ("Maximum number of tests to be done. Defaults to " ++ defaultCount ++ ".")
   , Option ['s']
       ["size"]
-      (ReqArg (\s opts -> opts { optCountRaw = s }) "NUMBER")
+      (ReqArg (\s opts -> opts { optSizeRaw = s }) "NUMBER")
       ("Maximum size/complexity for a tests. Defaults to " ++ defaultSize ++ ".")
   ]
   where
