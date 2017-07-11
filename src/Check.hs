@@ -1,10 +1,7 @@
-module Check
-  ( checkWord64
-  , checkWord32
-  , checkWord16
-  , checkWord8
-  ) where
+module Check (checkWord) where
 
+
+import Commandline
 import Data.Word
 import ExpressionTest
 import System.Directory
@@ -44,15 +41,13 @@ evalWord8Correct :: Expr Word8 -> Property
 evalWord8Correct = evalExpressionCorrect runTestScript
 
 
--- |Run up to 'n' random tests.
-checkWord64 :: Int -> IO ()
-checkWord64 count = quickCheckWith stdArgs { maxSuccess=count } evalWord64Correct
-
-checkWord32 :: Int -> IO ()
-checkWord32 count = quickCheckWith stdArgs { maxSuccess=count } evalWord32Correct
-
-checkWord16 :: Int -> IO ()
-checkWord16 count = quickCheckWith stdArgs { maxSuccess=count } evalWord16Correct
-
-checkWord8 :: Int -> IO ()
-checkWord8 count = quickCheckWith stdArgs { maxSuccess=count } evalWord8Correct
+-- |Run random tests according options.
+checkWord :: Options -> IO ()
+checkWord opts =
+  case optType opts of
+    UINT64 -> quickCheckWith args evalWord64Correct
+    UINT32 -> quickCheckWith args evalWord32Correct
+    UINT16 -> quickCheckWith args evalWord16Correct
+    UINT8  -> quickCheckWith args evalWord8Correct
+  where
+    args = stdArgs { maxSuccess=optCount opts, maxSize=optSize opts }

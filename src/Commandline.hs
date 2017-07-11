@@ -28,6 +28,8 @@ data Options = Options
   , optTypeRaw     :: String     -- ^ Base data type as specified on command line
   , optCount       :: Int        -- ^ Maximum number of tests
   , optCountRaw    :: String     -- ^ Maximum number as specified on command line
+  , optSize        :: Int        -- ^ Maximum size of tests
+  , optSizeRaw     :: String     -- ^ Maximum size as specified on command line
   , optShowHelp    :: Bool       -- ^ Show help and terminate program
   } deriving (Eq,Show)
 
@@ -38,6 +40,8 @@ defaultOptions     = Options
   , optTypeRaw     = ""
   , optCount       = 1024
   , optCountRaw    = ""
+  , optSize        = 100
+  , optSizeRaw     = ""
   , optShowHelp    = False
   }
 
@@ -51,15 +55,20 @@ options =
   , Option ['t']
       ["type"]
       (ReqArg (\s opts -> opts { optTypeRaw = s }) "TYPE")
-      ("Set base data type for tested expressions to 'uint64', 'uint32', 'uint16' or 'uint8'. Defaults to '" ++ defaultType ++ "'.")
+      ("Set data type for tested expressions to 'uint64', 'uint32', 'uint16' or 'uint8'. Defaults to '" ++ defaultType ++ "'.")
   , Option ['c']
       ["count"]
       (ReqArg (\s opts -> opts { optCountRaw = s }) "NUMBER")
       ("Maximum number of tests to be done. Defaults to " ++ defaultCount ++ ".")
+  , Option ['s']
+      ["size"]
+      (ReqArg (\s opts -> opts { optCountRaw = s }) "NUMBER")
+      ("Maximum size/complexity for a tests. Defaults to " ++ defaultSize ++ ".")
   ]
   where
     defaultType  = map toLower $ show $ optType defaultOptions
     defaultCount = show $ optCount defaultOptions
+    defaultSize  = show $ optSize defaultOptions
 
 
 -- |Command line handling
@@ -68,7 +77,10 @@ commandLineOptions argv =
   case getOpt Permute options argv of
     (o, _, []) -> do
       when (optShowHelp opts) help
-      return opts >>= handleType >>= handleCount
+      return opts
+        >>= handleType
+        >>= handleInteger "number of tests" optCountRaw (\r i-> r { optCount = i })
+        >>= handleInteger "size of test" optSizeRaw (\r i-> r { optSize = i })
       where
         opts = foldl (flip id) defaultOptions o
         help = exitWithInfo (usageInfo header options)
@@ -92,12 +104,12 @@ handleType opts
     format = map toUpper $ optTypeRaw opts
 
 
--- |Check for a valid test count specification
-handleCount :: Options -> IO Options
-handleCount opts
+-- |Check for a valid integer parameter
+handleInteger :: String -> (Options -> String) -> (Options -> Int -> Options) -> Options -> IO Options
+handleInteger name getRaw setInt opts
   | null format = return opts
   | otherwise   = case readMaybe format of
-                    Just n  -> return opts { optCount = n }
-                    Nothing -> exitWithError $ "Error: illegal number of tests '" ++ format ++ "'"
+                    Just i  -> return $ setInt opts i
+                    Nothing -> exitWithError $ "Error: illegal " ++ name ++ " '" ++ format ++ "'"
   where
-    format = optCountRaw opts
+    format = getRaw opts
