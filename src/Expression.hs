@@ -209,8 +209,8 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
 
           condExpr = CondExpr
             <$> elements [Equal, NotEqual, LessThan, GreaterThan, LessOrEqual, GreaterOrEqual]
-            <*> (expr bits $ n `div` 2)
-            <*> (expr bits $ n `div` 2)
+            <*> (expr bits $ n `div` 3)
+            <*> (expr bits $ n `div` 3)
             <*> (expr bits $ n-1)
             <*> (expr bits $ n-1)
 
