@@ -4,59 +4,85 @@ module ExpressionTest
   ) where
 
 import Data.Bits as Bit
+import Data.ByteString.Builder
 import Data.Maybe
+import Data.Monoid
 import Expression
+import qualified Data.ByteString.Lazy.Char8 as L
 import Test.QuickCheck
 import Test.QuickCheck.Monadic
-import Text.Printf
 
 
 -- |Proposition that evaluating expressions works
-evalExpressionCorrect :: (Integral a, Bits a, ExprBase a) => (String -> IO Bool) -> ExprList a -> Property
+evalExpressionCorrect :: (Integral a, Bits a, ExprBase a) => (L.ByteString -> IO Bool) -> ExprList a -> Property
 evalExpressionCorrect runTest el = monadicIO $ do
   result <- run $ runTest . genCode $ el
   assert (result == True)
 
 
--- |Generates a C program that tests evaluating the given expression
-genCode :: (Integral a, Bits a, ExprBase a) => ExprList a -> String
-genCode (ExprList xs) = concat [includes, functions, main]
+-- |Generates a C program that tests evaluation of the given expression
+genCode :: (Integral a, Bits a, ExprBase a) => ExprList a -> L.ByteString
+genCode (ExprList xs) = toLazyByteString $  code_prefix
+                                         <> test_functions (zip [1..] xs)
+                                         <> main_prefix
+                                         <> test_calls [1..length xs]
+                                         <> main_suffix
+
+
+code_prefix :: Builder
+code_prefix = string8 "#include <stdio.h>\n\
+                      \#include <stdlib.h>\n\n\
+                      \void exit_ok(void)\n\
+                      \{\n\
+                      \    exit (EXIT_SUCCESS);\n\
+                      \}\n\n\
+                      \void exit_evil(void)\n\
+                      \{\n\
+                      \    exit (EXIT_FAILURE);\n\
+                      \}\n\n"
+
+
+main_prefix :: Builder
+main_prefix = string8 "int main(void)\n{\n"
+
+
+main_suffix :: Builder
+main_suffix = string8 "    exit_ok();\n}\n"
+
+
+test_functions :: (Integral a, Bits a, ExprBase a) => [(Int, Expr a)] -> Builder
+test_functions = mconcat . map function
   where
-    includes  = "#include <stdio.h>\n\n"
-    functions = unlines $ map function $ zip xs [1..]
+    function (n, x) = prefix <> intDec n <> begin <> decls (variables x) <> test x <> end
 
-    -- declaration for local variables
-    decl :: (Integral a, Bits a, ExprBase a) => (String, a) -> String
-    decl (n, v)     = printf "    volatile %s %s = %s;\n" (printType v) n (printConstant v)
+    prefix = string8 "int test"
+    begin  = string8 "(void)\n{\n"
+    end    = string8 ");\n}\n\n"
+    decls  = mconcat . map decl
 
-    -- test function for a single expression
-    function :: (Integral a, Bits a, ExprBase a) => (Expr a, Int) -> String
-    function (x, n) =
-      let xVal  = fromJust $ eval x
-          decls = concat $ map decl $ variables x
-      in
-        printf "int test%d(void)\n\
-               \{\n\
-               \%s\
-               \    %s expr = %s;\n\
-               \    return (expr != %s);\n\
-               \}\n"
-               n
-               decls
-               (printType xVal)
-               (show x)
-               (printConstant xVal)
+    test x =
+      let val = fromJust $ eval x
+      in   string8 "    "
+        <> printType val
+        <> string8 " expr = "
+        <> printExpr x
+        <> string8 ";\n    return (expr != "
+        <> printConst val
 
-    -- code to call n test functions
-    testcalls :: Int -> String
-    testcalls n = concat $ map (printf "    if (test%d() != 0) return 1;\n") [1..n]
 
-    -- code for the main function
-    main :: String
-    main = printf "\n\
-                  \int main (void)\n\
-                  \{\n\
-                  \%s\n\
-                  \    return 0;\n\
-                  \}\n"
-                  (testcalls $ length xs)
+decl :: (Integral a, Bits a, ExprBase a) => (String, a) -> Builder
+decl (name, val) = string8 "    volatile "
+                <> printType val
+                <> string8 " "
+                <> string8 name
+                <> string8 " = "
+                <> printConst val
+                <> string8 ";\n"
+
+
+test_calls :: [Int] -> Builder
+test_calls = mconcat . map call
+  where
+    call n = prefix <> intDec n <> suffix
+    prefix = string8 "    if (test"
+    suffix = string8 "() != 0) exit_evil();\n"

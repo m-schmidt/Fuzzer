@@ -22,5 +22,5 @@ catchIO :: (FilePath -> IO a) -> FilePath -> IO a
 catchIO action path = catchIOError (action path) handler
   where
     handler e
-      | isPermissionError e   = exitWithError $ "Error: permission to access file '" ++ path ++ "' denied."
-      | otherwise             = exitWithError $ "Error: unknown error while accessing file '" ++ path ++ "'."
+      | isPermissionError e = exitWithError $ "Error: permission to access file '" ++ path ++ "' denied."
+      | otherwise           = exitWithError $ "Error: unknown error while accessing file '" ++ path ++ "'."

@@ -1,37 +1,45 @@
 module Expression where
 
 import Data.Bits as Bit
-import qualified Data.Set as Set
+import Data.ByteString.Builder
+import Data.Monoid
 import Data.Word
 import Numeric
+import qualified Data.ByteString.Lazy.Char8 as L
+import qualified Data.Set as Set
 import Test.QuickCheck
 
 
 -- |Base types for expressions
 class Show a => ExprBase a where
-  bitWidth :: a -> Int             -- ^ width of C data type in bits
-  printType :: a -> String         -- ^ print corresponding C data type
-  printConstant :: a -> String     -- ^ print value as constant in C syntax
+  printType :: a -> Builder    -- ^ Print corresponding C data type
+  printConst :: a -> Builder   -- ^ Print value as constant in C syntax
+  amounts :: a -> [a]          -- ^ Shift amounts
+  immediates :: a -> [a]       -- ^ Selected immediate values
 
 instance ExprBase Word64 where
-  bitWidth _      = 64
-  printType _     = "unsigned long long"
-  printConstant i = "0x" ++ showHex i "ULL"
+  printType _  = string8 "unsigned long long"
+  printConst i = string8 "0x" <> word64Hex i <> string8 "ULL"
+  amounts _    = [ 1,6..63 ]
+  immediates _ = [ Bit.bit i | i <- [0..63]] ++ [ Bit.bit i - 1 | i <- [1..63]]
 
 instance ExprBase Word32 where
-  bitWidth _      = 32
-  printType _     = "unsigned long"
-  printConstant i = "0x" ++ showHex i "UL"
+  printType _  = string8 "unsigned long"
+  printConst i = string8 "0x" <> word32Hex i <> string8 "UL"
+  amounts _    = [ 1,4..31 ]
+  immediates _ = [ Bit.bit i | i <- [0..31]] ++ [ Bit.bit i - 1 | i <- [1..31]]
 
 instance ExprBase Word16 where
-  bitWidth _      = 16
-  printType _     = "unsigned short"
-  printConstant i = "0x" ++ showHex i "U"
+  printType _  = string8 "unsigned short"
+  printConst i = string8 "0x" <> word16Hex i <> string8 "U"
+  amounts _    = [ 1,4..16 ]
+  immediates _ = [ Bit.bit i | i <- [0..15]] ++ [ Bit.bit i - 1 | i <- [1..15]]
 
 instance ExprBase Word8 where
-  bitWidth _      = 8
-  printType _     = "unsigned char"
-  printConstant i = "0x" ++ showHex i "U"
+  printType _  = string8 "unsigned char"
+  printConst i = string8 "0x" <> word8Hex i <> string8 "U"
+  amounts _    = [ 1..7 ]
+  immediates _ = [ Bit.bit i | i <- [0..7]] ++ [ Bit.bit i - 1 | i <- [1..7]]
 
 
 -- |Unary operations for expressions
@@ -116,20 +124,26 @@ data Expr a
   | Variable String a
   deriving Eq
 
-instance (Integral a, Bits a, ExprBase a) => Show (Expr a) where
-  show = showExpr 0
-    where
-      showExpr :: (Integral a, Bits a, ExprBase a) => a -> Expr a -> String
-      showExpr v expr = case expr of
-        UnExpr o e             -> "(" ++ printType v ++ ")(" ++ show o ++ showSub e ++ ")"
-        BinExpr o e1 e2        -> "(" ++ printType v ++ ")(" ++ showSub e1 ++ show o ++ showSub e2 ++ ")"
-        CondExpr o e1 e2 e3 e4 -> showSub e1 ++ show o ++ showSub e2 ++ " ? " ++ showSub e3 ++ " : " ++ showSub e4
-        Value i                -> printConstant i
-        Variable n _           -> n
 
-      showSub :: (Integral a, Bits a, ExprBase a) => Expr a -> String
-      showSub (Value i) = printConstant i
-      showSub x         = "(" ++ show x ++ ")"
+-- |Show instance for messages of QuickCheck
+instance (Integral a, Bits a, ExprBase a) => Show (Expr a) where
+  show = L.unpack . toLazyByteString . printExpr
+
+
+-- |Builder for bytestream of an expression in C syntax
+printExpr :: (Integral a, Bits a, ExprBase a) => Expr a -> Builder
+printExpr = pe 0
+  where
+    pe :: (Integral a, Bits a, ExprBase a) => a -> Expr a -> Builder
+    pe v expr = case expr of
+      UnExpr o e             -> char8 '(' <> printType v <> string8 ")(" <> string8 (show o) <> pse e <> char8 ')'
+      BinExpr o e1 e2        -> char8 '(' <> printType v <> string8 ")(" <> pse e1 <> string8 (show o) <> pse e2 <> char8 ')'
+      CondExpr o e1 e2 e3 e4 -> pse e1 <> string8 (show o) <> pse e2 <> string8 " ? " <> pse e3 <> string8 " : " <> pse e4
+      Value i                -> printConst i
+      Variable n _           -> string8 n
+
+    pse (Value i) = printConst i
+    pse x         = char8 '(' <> pe 0 x <> char8 ')'
 
 
 -- |Evaluate an expression
@@ -161,58 +175,55 @@ variables = Set.toAscList . go Set.empty
 -- |Random expressions for QuickCheck
 instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
   -- |Geneator for random expressions
-  arbitrary = sized $ expr 0
+  arbitrary = sized expr
     where
-      expr :: (Integral a, Bits a, ExprBase a) => a -> Int -> Gen (Expr a)
-      expr bits n
+      expr :: (Integral a, Bits a, ExprBase a) => Int -> Gen (Expr a)
+      expr n
         | n == 0    = oneof [immAmount, mkVar <$> immAmount, immAny, mkVar <$> immAny]
         | n > 0     = oneof [unaryExpr, arithExpr1, arithExpr2, shiftExpr, bitExpr, condExpr]
         | otherwise = undefined
         where
           -- immediate constants/variable from range suitable as shift amount
-          immAmount = Value <$> elements amounts
-          amounts   = [ fromIntegral sh | sh <- [1,4..63], sh < bitWidth bits]
+          immAmount = Value <$> elements (amounts 0)
 
           -- immediate constants/variable from full range of data type
-          immAny    = Value <$> elements (powers ++ powers_m1)
-          powers    = [ Bit.bit i | i <- [0..63], i < bitWidth bits]
-          powers_m1 = [ i - 1 | i <- powers, i /= 1]
+          immAny    = Value <$> elements (immediates 0)
 
           -- convert immediate values into variables
-          mkVar (Value i) = Variable ("var_x" ++ showHex i "") i
+          mkVar (Value i) = Variable ("v_" ++ showHex i "") i
           mkVar _         = undefined
 
           -- generators for all expression forms
           unaryExpr = UnExpr
             <$> elements [Complement, Negate]
-            <*> (expr bits $ n-1)
+            <*> (expr $ n-1)
 
           arithExpr1 = BinExpr
             <$> elements [Add, Sub, Mul]
-            <*> (expr bits $ n `div` 2)
-            <*> (expr bits $ n `div` 2)
+            <*> (expr $ n `div` 2)
+            <*> (expr $ n `div` 2)
 
           arithExpr2 = BinExpr
             <$> elements [Div, Mod]
-            <*> (expr bits $ n `div` 2)
-            <*> suchThat (expr bits $ n `div` 2) ((/= Just 0) . eval)
+            <*> (expr $ n `div` 2)
+            <*> suchThat (expr $ n `div` 2) ((/= Just 0) . eval)
 
           shiftExpr = BinExpr
             <$> elements [Shl, Shr]
-            <*> (expr bits $ n `div` 2)
+            <*> (expr $ n `div` 2)
             <*> oneof [immAmount, mkVar <$> immAmount]
 
           bitExpr = BinExpr
             <$> elements [And, Or, Xor]
-            <*> (expr bits $ n `div` 2)
-            <*> (expr bits $ n `div` 2)
+            <*> (expr $ n `div` 2)
+            <*> (expr $ n `div` 2)
 
           condExpr = CondExpr
             <$> elements [Equal, NotEqual, LessThan, GreaterThan, LessOrEqual, GreaterOrEqual]
-            <*> (expr bits $ n `div` 3)
-            <*> (expr bits $ n `div` 3)
-            <*> (expr bits $ n-1)
-            <*> (expr bits $ n-1)
+            <*> (expr $ n `div` 3)
+            <*> (expr $ n `div` 3)
+            <*> (expr $ n-1)
+            <*> (expr $ n-1)
 
   -- |Shrink an expression into smaller expressions
   shrink expr = filter ((/= Nothing) . eval) $ case expr of
@@ -222,9 +233,11 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
     _                      -> []
 
 
--- |Expressions
+-- |Lists of expressions
 data ExprList a = ExprList [Expr a] deriving (Eq, Show)
 
+
+-- |Random expression lists of fixed size for QuickCheck
 instance (Integral a, Bits a, ExprBase a) => Arbitrary (ExprList a) where
   arbitrary = ExprList <$> vector 42
   shrink (ExprList xs) = map (\x -> ExprList [x]) xs

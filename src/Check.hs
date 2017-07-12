@@ -2,6 +2,7 @@ module Check (checkWord) where
 
 
 import Commandline
+import Data.ByteString.Lazy.Char8 as L
 import Data.Word
 import ExpressionTest
 import System.Directory
@@ -12,12 +13,12 @@ import Test.QuickCheck
 
 
 -- |Run external test script on generated 'input' C program and return whether exit code of script was OK.
-runTestScript :: String -> IO Bool
+runTestScript :: L.ByteString -> IO Bool
 runTestScript input = do
   -- write input program into temporary file
   tmpDir <- getTemporaryDirectory
   (tmpName, tmpHandle) <- openTempFile tmpDir "test.c"
-  hPutStr tmpHandle input
+  L.hPutStr tmpHandle input
   hClose tmpHandle
   -- run test script on input
   (code, _, _) <- readProcessWithExitCode "./test.sh" [tmpName] ""
