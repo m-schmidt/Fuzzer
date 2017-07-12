@@ -131,10 +131,10 @@ instance (Integral a, Bits a, ExprBase a) => Show (Expr a) where
 
 
 -- |Builder for bytestream of an expression in C syntax
-printExpr :: (Integral a, Bits a, ExprBase a) => Expr a -> Builder
+printExpr :: (Integral a, ExprBase a) => Expr a -> Builder
 printExpr = pe 0
   where
-    pe :: (Integral a, Bits a, ExprBase a) => a -> Expr a -> Builder
+    pe :: (Integral a, ExprBase a) => a -> Expr a -> Builder
     pe v expr = case expr of
       UnExpr o e             -> char8 '(' <> printType v <> string8 ")(" <> string8 (show o) <> pse e <> char8 ')'
       BinExpr o e1 e2        -> char8 '(' <> printType v <> string8 ")(" <> pse e1 <> string8 (show o) <> pse e2 <> char8 ')'
@@ -187,7 +187,7 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
           immAmount = Value <$> elements (amounts 0)
 
           -- immediate constants/variable from full range of data type
-          immAny    = Value <$> elements (immediates 0)
+          immAny = Value <$> elements (immediates 0)
 
           -- convert immediate values into variables
           mkVar (Value i) = Variable ("v_" ++ showHex i "") i
