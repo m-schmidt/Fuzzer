@@ -35,11 +35,11 @@ codePrefix = string8 "#include <stdio.h>\n\
                       \#include <stdlib.h>\n\n\
                       \void exit_ok(void)\n\
                       \{\n\
-                      \    exit (EXIT_SUCCESS);\n\
+                      \    exit(EXIT_SUCCESS);\n\
                       \}\n\n\
                       \void exit_evil(int status)\n\
                       \{\n\
-                      \    exit (status);\n\
+                      \    exit(status);\n\
                       \}\n\n"
 
 
