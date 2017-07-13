@@ -37,9 +37,9 @@ codePrefix = string8 "#include <stdio.h>\n\
                       \{\n\
                       \    exit (EXIT_SUCCESS);\n\
                       \}\n\n\
-                      \void exit_evil(void)\n\
+                      \void exit_evil(int status)\n\
                       \{\n\
-                      \    exit (EXIT_FAILURE);\n\
+                      \    exit (status);\n\
                       \}\n\n"
 
 
@@ -83,9 +83,10 @@ mainPrefix = string8 "int main(void)\n{\n"
 testCalls :: [Int] -> Builder
 testCalls = mconcat . map call
   where
-    call n = prefix <> intDec n <> suffix
+    call n = prefix <> intDec n <> mid <> intDec n <> suffix
     prefix = string8 "    if (test"
-    suffix = string8 "() != 0) exit_evil();\n"
+    mid    = string8 "() != 0) exit_evil("
+    suffix = string8 ");\n"
 
 
 -- |Footer of main function after calls to test functions
