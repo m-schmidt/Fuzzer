@@ -14,19 +14,19 @@ import Test.QuickCheck.Monadic
 
 
 -- |Proposition that evaluating expressions works
-evalExpressionCorrect :: (Integral a, Bits a, ExprBase a) => (L.ByteString -> IO Bool) -> ExprList a -> Property
+evalExpressionCorrect :: (Integral a, Bits a, ExprBase a) => ([L.ByteString] -> IO Bool) -> ExprList a -> Property
 evalExpressionCorrect runTest el = monadicIO $ do
   result <- run $ runTest . genCode $ el
   assert (result == True)
 
 
--- |Generates a C program that tests evaluation of the given expression
-genCode :: (Integral a, Bits a, ExprBase a) => ExprList a -> L.ByteString
-genCode (ExprList xs) = toLazyByteString $  codePrefix
-                                         <> testFunctions (zip [1..] xs)
-                                         <> mainPrefix
-                                         <> testCalls [1..length xs]
-                                         <> mainSuffix
+-- |Generate a C code that tests evaluation of the given expression
+genCode :: (Integral a, Bits a, ExprBase a) => ExprList a -> [L.ByteString]
+genCode (ExprList xs) = [toLazyByteString $  codePrefix
+                                          <> testFunctions (zip [1..] xs)
+                                          <> mainPrefix
+                                          <> testCalls [1..length xs]
+                                          <> mainSuffix]
 
 
 -- |Program head with include statements and the exit-functions
