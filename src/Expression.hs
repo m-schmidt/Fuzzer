@@ -24,8 +24,8 @@ instance ExprBase Word64 where
   immediates _ = [ Bit.bit i | i <- [0..63]] ++ [ Bit.bit i - 1 | i <- [1..63]]
 
 instance ExprBase Word32 where
-  printType _  = string8 "unsigned long"
-  printConst i = string8 "0x" <> word32Hex i <> string8 "UL"
+  printType _  = string8 "unsigned int"
+  printConst i = string8 "0x" <> word32Hex i <> string8 "U"
   amounts _    = [ 1,4..31 ]
   immediates _ = [ Bit.bit i | i <- [0..31]] ++ [ Bit.bit i - 1 | i <- [1..31]]
 
