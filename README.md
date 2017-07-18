@@ -25,3 +25,8 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 - To run at most `100` tests with expressions based on `32bit unsigned integers`:
 
       $ stack exec fuzzer -- -t uint32 -c 100
+
+
+## Note
+
+The generated C code assumes that the datatypes `unsigned char`, `unsigned short`, `unsigned int`, and `unsigned long long` have sizes of 8, 16, 32, and 64 bits respectively.
