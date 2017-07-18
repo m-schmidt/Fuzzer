@@ -1,5 +1,5 @@
 module Check
-  ( checkExpression
+  ( checkExpressions
   , checkConventions
   ) where
 
@@ -63,8 +63,8 @@ evalWord8Correct = evalExpressionCorrect $ runTestScript "./test1.sh"
 
 
 -- |Run random tests to evaluate expressions
-checkExpression :: Options -> IO ()
-checkExpression opts =
+checkExpressions :: Options -> IO ()
+checkExpressions opts =
   case optExprType opts of
     UINT64 -> quickCheckWith args evalWord64Correct
     UINT32 -> quickCheckWith args evalWord32Correct

@@ -9,5 +9,5 @@ main :: IO ()
 main = do
   opts <- getArgs >>= commandLineOptions
   case optMode opts of
-    EXPR -> checkExpression opts
+    EXPR -> checkExpressions opts
     CONV -> checkConventions opts
