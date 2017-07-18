@@ -40,6 +40,7 @@ defaultOptions  = Options
   , optShowHelp = False
   }
 
+
 type Result a = Either String a
 
 
@@ -68,27 +69,23 @@ options =
     defaultCount = show $ optCount defaultOptions
     defaultSize  = show $ optSize defaultOptions
 
+    convertType s opts =
+      case readMaybe $ (map toUpper) s of
+        Just t -> Right opts { optType = t }
+        _      -> Left $ "illegal data type `" ++ s ++ "'"
 
-convertType :: String -> Options -> Result Options
-convertType s opts =
-  case readMaybe $ (map toUpper) s of
-    Just t -> Right opts { optType = t }
-    _      -> Left $ "illegal data type `" ++ s ++ "'"
+    convertCount s opts =
+      case readMaybe s of
+        Just i -> Right opts { optCount = i }
+        _      -> Left $ "illegal number of tests `" ++ s ++ "'"
 
-convertCount :: String -> Options -> Result Options
-convertCount s opts =
-  case readMaybe s of
-    Just i -> Right opts { optCount = i }
-    _      -> Left $ "illegal number of tests `" ++ s ++ "'"
-
-convertSize :: String -> Options -> Result Options
-convertSize s opts =
-  case readMaybe s of
-    Just i -> Right opts { optSize = i }
-    _      -> Left $ "illegal size for test `" ++ s ++ "'"
+    convertSize s opts =
+      case readMaybe s of
+        Just i -> Right opts { optSize = i }
+        _      -> Left $ "illegal size for test `" ++ s ++ "'"
 
 
--- |Command line handling
+-- |Parse the commandline
 commandLineOptions :: [String] -> IO Options
 commandLineOptions argv =
   case getOpt Permute options argv of
