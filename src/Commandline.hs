@@ -41,11 +41,8 @@ defaultOptions  = Options
   }
 
 
-type Result a = Either String a
-
-
 -- |Option descriptions for GetOpt module
-options :: [OptDescr (Options -> Result Options)]
+options :: [OptDescr (Options -> Either String Options)]
 options =
   [ Option ['h','?']
       ["help"]
@@ -69,20 +66,17 @@ options =
     defaultCount = show $ optCount defaultOptions
     defaultSize  = show $ optSize defaultOptions
 
-    convertType s opts =
-      case readMaybe $ (map toUpper) s of
-        Just t -> Right opts { optType = t }
-        _      -> Left $ "illegal data type `" ++ s ++ "'"
+    convertType s opts = case readMaybe $ (map toUpper) s of
+      Just t -> Right opts { optType = t }
+      _      -> Left $ "illegal data type `" ++ s ++ "'"
 
-    convertCount s opts =
-      case readMaybe s of
-        Just i -> Right opts { optCount = i }
-        _      -> Left $ "illegal number of tests `" ++ s ++ "'"
+    convertCount s opts = case readMaybe s of
+      Just i -> Right opts { optCount = i }
+      _      -> Left $ "illegal number of tests `" ++ s ++ "'"
 
-    convertSize s opts =
-      case readMaybe s of
-        Just i -> Right opts { optSize = i }
-        _      -> Left $ "illegal size for test `" ++ s ++ "'"
+    convertSize s opts = case readMaybe s of
+      Just i -> Right opts { optSize = i }
+      _      -> Left $ "illegal size for test `" ++ s ++ "'"
 
 
 -- |Parse the commandline
