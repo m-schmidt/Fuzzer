@@ -45,7 +45,7 @@ evalWord8Correct = evalExpressionCorrect runTestScript
 -- |Run random tests according options.
 checkWord :: Options -> IO ()
 checkWord opts =
-  case optType opts of
+  case optExprType opts of
     UINT64 -> quickCheckWith args evalWord64Correct
     UINT32 -> quickCheckWith args evalWord32Correct
     UINT16 -> quickCheckWith args evalWord16Correct

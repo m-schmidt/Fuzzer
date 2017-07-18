@@ -1,6 +1,7 @@
 -- |Module to parse the command line
 module Commandline
-  ( DataType(..)
+  ( TestMode(..)
+  , DataType(..)
   , Options(..)
   , commandLineOptions
   )
@@ -14,6 +15,12 @@ import System.Console.GetOpt
 import Text.Read
 
 
+-- |Supported modes for testing
+data TestMode
+  = EXPR      -- ^ Test evaluation of expressions
+  | CONV      -- ^ Test calling conventions
+  deriving (Eq,Show,Read)
+
 -- |Supported types for testing
 data DataType
   = UINT64
@@ -25,7 +32,8 @@ data DataType
 
 -- |Command line options
 data Options = Options
-  { optType     :: DataType   -- ^ Base data type for expressions during testing
+  { optMode     :: TestMode   -- ^ Mode for testing
+  , optExprType :: DataType   -- ^ Base data type for expression testing
   , optCount    :: Int        -- ^ Maximum number of tests
   , optSize     :: Int        -- ^ Maximum size of tests
   , optShowHelp :: Bool       -- ^ Show help and terminate program
@@ -34,7 +42,8 @@ data Options = Options
 -- |Default values for command line options
 defaultOptions :: Options
 defaultOptions  = Options
-  { optType     = UINT64
+  { optMode     = EXPR
+  , optExprType = UINT64
   , optCount    = 100
   , optSize     = 30
   , optShowHelp = False
@@ -48,10 +57,14 @@ options =
       ["help"]
       (NoArg (\opts -> Right opts { optShowHelp = True }))
       "Print this help message."
+  , Option ['m']
+      ["mode"]
+      (ReqArg convertMode "MODE")
+      ("Select mode for testing, either `expr' or `conv'. Defaults to `" ++ defaultMode ++ "'.")
   , Option ['t']
       ["type"]
       (ReqArg convertType "TYPE")
-      ("Set data type for tested expressions to `uint8', `uint16', `uint32' or `uint64'. Defaults to `" ++ defaultType ++ "'.")
+      ("Set data type for expression tests to `uint8', `uint16', `uint32' or `uint64'. Defaults to `" ++ defaultExprType ++ "'.")
   , Option ['c']
       ["count"]
       (ReqArg convertCount "NUMBER")
@@ -62,12 +75,17 @@ options =
       ("Maximum size (complexity) for each test. Defaults to " ++ defaultSize ++ ".")
   ]
   where
-    defaultType  = map toLower $ show $ optType defaultOptions
-    defaultCount = show $ optCount defaultOptions
-    defaultSize  = show $ optSize defaultOptions
+    defaultMode     = map toLower $ show $ optMode defaultOptions
+    defaultExprType = map toLower $ show $ optExprType defaultOptions
+    defaultCount    = show $ optCount defaultOptions
+    defaultSize     = show $ optSize defaultOptions
+
+    convertMode s opts = case readMaybe $ (map toUpper) s of
+      Just m -> Right opts { optMode = m }
+      _      -> Left $ "illegal mode `" ++ s ++ "'"
 
     convertType s opts = case readMaybe $ (map toUpper) s of
-      Just t -> Right opts { optType = t }
+      Just t -> Right opts { optExprType = t }
       _      -> Left $ "illegal data type `" ++ s ++ "'"
 
     convertCount s opts = case readMaybe s of
