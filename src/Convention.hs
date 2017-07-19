@@ -1,5 +1,6 @@
 module Convention
   ( Signature(..)
+  , SignatureList(..)
   , ArgumentType
   , printArgumentType
   , argumentByteSize
@@ -46,7 +47,8 @@ instance Arbitrary Signature where
   arbitrary = Signature <$> sized arguments
     where
       arguments :: Int -> Gen [ArgumentType]
-      arguments n = vectorOf n $ elements [minBound..maxBound]
+      arguments n | n > 0     = vectorOf n $ elements [minBound..maxBound]
+                  | otherwise = arguments 1
 
 
 -- |Lists of signatures
