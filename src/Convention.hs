@@ -16,8 +16,8 @@ data ArgumentType
   deriving (Eq, Enum, Bounded, Ord, Show)
 
 -- |C syntax for data type
-cType :: ArgumentType -> Builder
-cType t = case t of
+printArgumentType :: ArgumentType -> Builder
+printArgumentType t = case t of
   I8      -> string8 "unsigned char"
   I16     -> string8 "unsigned short"
   I32     -> string8 "unsigned int"
