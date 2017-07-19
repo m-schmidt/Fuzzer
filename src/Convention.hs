@@ -50,6 +50,8 @@ instance Arbitrary Signature where
       arguments n | n > 0     = vectorOf n $ elements [minBound..maxBound]
                   | otherwise = arguments 1
 
+  shrink (Signature args) = Signature <$> shrinkList shrinkNothing args
+
 
 -- |Lists of signatures
 data SignatureList = SignatureList [Signature] deriving (Eq, Show)
