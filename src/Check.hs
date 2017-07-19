@@ -19,21 +19,21 @@ import Test.QuickCheck
 
 
 -- |Check whether file at specified path exists and is executable
-checkTestScript :: FilePath -> IO ()
-checkTestScript path = do
+checkExecutable :: FilePath -> IO ()
+checkExecutable path = do
     exists <- doesPathExist path
     unless (exists) $ exitWithError $ "Error: no test scipt '" ++ path ++ "' found in present working directory."
     permissions <- getPermissions path
     unless (executable permissions) $ exitWithError $ "Error: test scipt '" ++ path ++ "' is not executable."
 
 
--- |Run external test script on generated 'input' C program and return whether exit code of script was OK.
+-- |Run external test script on generated C program(s) and return whether exit code of script was OK.
 runTestScript :: String -> [L.ByteString] -> IO Bool
 runTestScript script inputs = do
-  checkTestScript script
-  -- write c code program into temporary files
+  checkExecutable script
+  -- write c program(s) into temporary files
   tmps <- forM inputs writeTmp
-  -- run test script on input
+  -- run test script on temporary files
   (code, _, _) <- readProcessWithExitCode script tmps ""
   -- cleanup
   forM_ tmps removeFile
