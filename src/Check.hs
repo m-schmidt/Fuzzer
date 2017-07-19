@@ -6,6 +6,7 @@ module Check
 
 import Commandline
 import Control.Monad
+import ConventionTest
 import Data.ByteString.Lazy.Char8 as L
 import Data.Word
 import Error
@@ -76,4 +77,7 @@ checkExpressions opts =
 
 -- |Run random tests for calling conventions
 checkConventions :: Options -> IO ()
-checkConventions = undefined
+checkConventions opts = quickCheckWith args prop
+  where
+    args = stdArgs { maxSuccess=optCount opts, maxSize=optSize opts }
+    prop = simpleConventionCorrect $ runTestScript "./test2.sh"

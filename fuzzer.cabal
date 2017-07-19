@@ -17,6 +17,7 @@ executable fuzzer
   other-modules:       Check
                      , Commandline
                      , Convention
+                     , ConventionTest
                      , Error
                      , Expression
                      , ExpressionTest
