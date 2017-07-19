@@ -1,5 +1,8 @@
 module Convention
   ( Signature(..)
+  , ArgumentType
+  , printArgumentType
+  , argumentByteSize
   ) where
 
 import Data.ByteString.Builder
@@ -25,8 +28,8 @@ printArgumentType t = case t of
   Pointer -> string8 "void *"
 
 -- |Size of data types in bytes
-byteSize :: ArgumentType -> Int
-byteSize t = case t of
+argumentByteSize :: ArgumentType -> Int
+argumentByteSize t = case t of
   I8      -> 1
   I16     -> 2
   I32     -> 4
@@ -44,3 +47,13 @@ instance Arbitrary Signature where
     where
       arguments :: Int -> Gen [ArgumentType]
       arguments n = vectorOf n $ elements [minBound..maxBound]
+
+
+-- |Lists of signatures
+data SignatureList = SignatureList [Signature] deriving (Eq, Show)
+
+
+-- |Random signature lists of fixed size for QuickCheck
+instance Arbitrary SignatureList where
+  arbitrary = SignatureList <$> vector 42
+  shrink (SignatureList xs) = map (\x -> SignatureList [x]) xs
