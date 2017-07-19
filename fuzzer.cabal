@@ -16,6 +16,7 @@ executable fuzzer
   main-is:             Main.hs
   other-modules:       Check
                      , Commandline
+                     , Convention
                      , Error
                      , Expression
                      , ExpressionTest
