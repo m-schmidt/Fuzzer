@@ -27,7 +27,7 @@ testProgram :: [Signature] -> Builder
 testProgram sigs = prefix <> intercalate (char8 '\n') functions
   where
     prefix = string8 "#include <string.h>\n\n\
-                     \#define BSIZE 64\n\
+                     \#define BSIZE 65536\n\
                      \static unsigned char data_r [BSIZE];\n\
                      \extern unsigned char data_s [BSIZE];\n\n\
                      \#define BYTE_N(x,n) (((unsigned long long)(x) >> ((n) << 3)) & 0xff)\n\n"
@@ -77,7 +77,7 @@ driverProgram sigs = prefix <> prototypes <> mid <> functions <> suffix
     functions  = intercalate (char8 '\n') $ map (uncurry callTestFunction) $ zip [1..] sigs
 
     prefix = string8 "#include <stdlib.h>\n\n\
-                     \#define BSIZE 64\n\
+                     \#define BSIZE 65536\n\
                      \unsigned char data_s [BSIZE];\n\n\
                      \void exit_ok(void)\n\
                      \{\n\
