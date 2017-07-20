@@ -113,7 +113,10 @@ options =
 commandLineOptions :: [String] -> IO Options
 commandLineOptions argv =
   case getOpt Permute options argv of
-    (acts, _, []) -> evalutate acts
+    (acts, _, []) -> do opts <- evalutate acts
+                        when (optMode opts == CONV && optComplexity opts >= 8192) $
+                          exitWithError "Error: complexity for mode `conv' must be < 8192."
+                        return opts
     (_, _, errs)  -> exitWithError $ concat (map ("Error: " ++) $ nub errs) ++ usage
 
   where
