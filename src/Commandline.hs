@@ -32,21 +32,25 @@ data DataType
 
 -- |Command line options
 data Options = Options
-  { optMode     :: TestMode   -- ^ Mode for testing
-  , optExprType :: DataType   -- ^ Base data type for expression testing
-  , optCount    :: Int        -- ^ Maximum number of tests
-  , optSize     :: Int        -- ^ Maximum size of tests
-  , optShowHelp :: Bool       -- ^ Show help and terminate program
+  { optMode         :: TestMode   -- ^ Mode for testing
+  , optExprType     :: DataType   -- ^ Base data type for expression testing
+  , optNumTests     :: Int        -- ^ Maximum number of tests
+  , optChunkSize    :: Int        -- ^ Chunk size for tests
+  , optComplexity   :: Int        -- ^ Maximum complexity of tests
+  , optShowHelp     :: Bool       -- ^ Show help and terminate program
+  , optEnableShrink :: Bool       -- ^ Try to shrink on failing tests
   } deriving (Eq,Show)
 
 -- |Default values for command line options
 defaultOptions :: Options
-defaultOptions  = Options
-  { optMode     = EXPR
-  , optExprType = UINT64
-  , optCount    = 100
-  , optSize     = 30
-  , optShowHelp = False
+defaultOptions = Options
+  { optMode         = EXPR
+  , optExprType     = UINT64
+  , optNumTests     = 100
+  , optChunkSize    = 1
+  , optComplexity   = 30
+  , optShowHelp     = False
+  , optEnableShrink = True
   }
 
 
@@ -65,36 +69,44 @@ options =
       ["type"]
       (ReqArg convertType "TYPE")
       ("Set data type for expression tests to `uint8', `uint16', `uint32' or `uint64'. Defaults to `" ++ defaultExprType ++ "'.")
+  , Option ['n']
+      ["number"]
+      (ReqArg (convertInt "number of tests" (\i opts -> opts { optNumTests = i })) "NUMBER")
+      ("Maximum number of tests to be done. Defaults to " ++ defaultNumTests ++ ".")
   , Option ['c']
-      ["count"]
-      (ReqArg convertCount "NUMBER")
-      ("Maximum number of tests to be done. Defaults to " ++ defaultCount ++ ".")
-  , Option ['s']
-      ["size"]
-      (ReqArg convertSize "NUMBER")
-      ("Maximum size (complexity) for each test. Defaults to " ++ defaultSize ++ ".")
+      ["complexity"]
+      (ReqArg (convertInt "complexity for tests" (\i opts -> opts { optComplexity = i })) "NUMBER")
+      ("Maximum complexity of each test. Defaults to " ++ defaultComplexity ++ ".")
+  , Option ['g']
+      ["groupsize"]
+      (ReqArg (convertInt "number of tests" (\i opts -> opts { optChunkSize = i })) "NUMBER")
+      ("Number of tests per call to external test-script. Defaults to " ++ defaultChunkSize ++ ".")
+  , Option []
+      ["noshrink"]
+      (NoArg (\opts -> Right opts { optEnableShrink = False }))
+      "Disable shrinking on test failure."
   ]
   where
-    defaultMode     = map toLower $ show $ optMode defaultOptions
-    defaultExprType = map toLower $ show $ optExprType defaultOptions
-    defaultCount    = show $ optCount defaultOptions
-    defaultSize     = show $ optSize defaultOptions
+    defaultMode       = map toLower $ show $ optMode defaultOptions
+    defaultExprType   = map toLower $ show $ optExprType defaultOptions
+    defaultNumTests   = show $ optNumTests defaultOptions
+    defaultChunkSize  = show $ optChunkSize defaultOptions
+    defaultComplexity = show $ optComplexity defaultOptions
 
+    convertMode :: String -> Options -> Either String Options
     convertMode s opts = case readMaybe $ (map toUpper) s of
       Just m -> Right opts { optMode = m }
       _      -> Left $ "illegal mode `" ++ s ++ "'"
 
+    convertType :: String -> Options -> Either String Options
     convertType s opts = case readMaybe $ (map toUpper) s of
       Just t -> Right opts { optExprType = t }
       _      -> Left $ "illegal data type `" ++ s ++ "'"
 
-    convertCount s opts = case readMaybe s of
-      Just i -> Right opts { optCount = i }
-      _      -> Left $ "illegal number of tests `" ++ s ++ "'"
-
-    convertSize s opts = case readMaybe s of
-      Just i -> Right opts { optSize = i }
-      _      -> Left $ "illegal size for test `" ++ s ++ "'"
+    convertInt :: String -> (Int -> Options -> Options) -> String -> Options -> Either String Options
+    convertInt desc f s opts = case readMaybe s of
+      Just i | i > 0 -> Right $ f i opts
+      _              -> Left  $ "illegal " ++ desc ++ " `" ++ s ++ "'"
 
 
 -- |Parse the commandline
