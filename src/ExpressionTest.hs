@@ -91,4 +91,4 @@ testCalls = mconcat . map call
 
 -- |Footer of main function after calls to test functions
 mainSuffix :: Builder
-mainSuffix = string8 "    exit_ok();\n}\n"
+mainSuffix = string8 "    exit_ok();\n    return 0;\n}\n"
