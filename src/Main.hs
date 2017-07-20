@@ -7,7 +7,7 @@ import System.Environment
 
 main :: IO ()
 main = do
-  opts <- getArgs >>= commandLineOptions >>= checkOptionsConsistency
+  opts <- getArgs >>= parseCommandLineOptions >>= checkOptionsConsistency
   case optMode opts of
     EXPR -> checkExpressions opts
     CONV -> checkConventions opts

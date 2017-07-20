@@ -3,7 +3,7 @@ module Commandline
   ( TestMode(..)
   , DataType(..)
   , Options(..)
-  , commandLineOptions
+  , parseCommandLineOptions
   , checkOptionsConsistency
   )
   where
@@ -117,8 +117,8 @@ usage = usageInfo "Synopsis: fuzzer [options]" options
 
 
 -- |Parse the commandline
-commandLineOptions :: [String] -> IO Options
-commandLineOptions argv =
+parseCommandLineOptions :: [String] -> IO Options
+parseCommandLineOptions argv =
   case getOpt Permute options argv of
     (acts, _, []) -> evalutate acts
     (_, _, errs)  -> exitWithError $ concat (map ("Error: " ++) $ nub errs) ++ usage
