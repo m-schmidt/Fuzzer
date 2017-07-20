@@ -24,7 +24,7 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
 - To run at most `100` tests with expressions based on `32bit unsigned integers`:
 
-      $ stack exec fuzzer -- -t uint32 -c 100
+      $ stack exec fuzzer -- -t uint32 -n 100
 
 
 ## Note
