@@ -113,11 +113,11 @@ options =
 commandLineOptions :: [String] -> IO Options
 commandLineOptions argv =
   case getOpt Permute options argv of
-    (acts, _, []) -> apply acts
+    (acts, _, []) -> evalutate acts
     (_, _, errs)  -> exitWithError $ concat (map ("Error: " ++) $ nub errs) ++ usage
 
   where
-    apply acts = do
+    evalutate acts = do
       case foldM (flip ($)) defaultOptions acts of
         Left err   -> exitWithError $ "Error: " ++ err ++ "\n" ++ usage
         Right opts -> do when (optShowHelp opts) $ exitWithInfo usage
