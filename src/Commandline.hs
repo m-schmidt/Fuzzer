@@ -34,9 +34,9 @@ data DataType
 data Options = Options
   { optMode         :: TestMode   -- ^ Mode for testing
   , optExprType     :: DataType   -- ^ Base data type for expression testing
-  , optNumTests     :: Int        -- ^ Maximum number of tests
-  , optChunkSize    :: Int        -- ^ Chunk size for tests
-  , optComplexity   :: Int        -- ^ Maximum complexity of tests
+  , optNumTests     :: Int        -- ^ Maximum number of test groups
+  , optChunkSize    :: Int        -- ^ Size of a test group
+  , optComplexity   :: Int        -- ^ Maximum complexity of test in a group
   , optShowHelp     :: Bool       -- ^ Show help and terminate program
   , optEnableShrink :: Bool       -- ^ Try to shrink on failing tests
   } deriving (Eq,Show)
@@ -72,7 +72,7 @@ options =
   , Option ['n']
       ["number"]
       (ReqArg (convertInt "number of tests" (\i opts -> opts { optNumTests = i })) "NUMBER")
-      ("Maximum number of tests to be done. Defaults to " ++ defaultNumTests ++ ".")
+      ("Maximum number of calls to the external test-script. Defaults to " ++ defaultNumTests ++ ".")
   , Option ['c']
       ["complexity"]
       (ReqArg (convertInt "complexity for tests" (\i opts -> opts { optComplexity = i })) "NUMBER")
