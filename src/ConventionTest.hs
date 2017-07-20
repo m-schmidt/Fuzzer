@@ -13,8 +13,8 @@ import Test.QuickCheck.Monadic
 
 
 -- |Proposition that calling convention correctly passes arguments
-simpleConventionCorrect :: ([L.ByteString] -> IO Bool) -> SignatureList -> Property
-simpleConventionCorrect runTest (SignatureList sigs) = monadicIO $ do
+simpleConventionCorrect :: ([L.ByteString] -> IO Bool) -> [Signature] -> Property
+simpleConventionCorrect runTest sigs = monadicIO $ do
   result <- run $ runTest [tst, drv]
   assert (result == True)
   where

@@ -1,9 +1,9 @@
 module Convention
   ( Signature(..)
-  , SignatureList(..)
   , ArgumentType
   , printArgumentType
   , argumentByteSize
+  , genSignatureList
   ) where
 
 import Data.ByteString.Builder
@@ -53,11 +53,6 @@ instance Arbitrary Signature where
   shrink (Signature args) = Signature <$> shrinkList shrinkNothing args
 
 
--- |Lists of signatures
-data SignatureList = SignatureList [Signature] deriving (Eq, Show)
-
-
--- |Random signature lists of fixed size for QuickCheck
-instance Arbitrary SignatureList where
-  arbitrary = SignatureList <$> vector 42
-  shrink (SignatureList xs) = map (\x -> SignatureList [x]) xs
+-- |Generator for a list of expressions. The list has a fixed length `len' and each expression is sized up to `complexity'
+genSignatureList :: Int -> Int -> Gen [Signature]
+genSignatureList len complexity = (vectorOf len $ resize complexity arbitrary)

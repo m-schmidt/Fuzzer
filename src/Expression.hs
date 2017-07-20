@@ -233,11 +233,6 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
     _                      -> []
 
 
--- |Lists of expressions
-data ExprList a = ExprList [Expr a] deriving (Eq, Show)
-
-
--- |Random expression lists of fixed size for QuickCheck
-instance (Integral a, Bits a, ExprBase a) => Arbitrary (ExprList a) where
-  arbitrary = ExprList <$> vector 42
-  shrink (ExprList xs) = map (\x -> ExprList [x]) xs
+-- |Generator for a list of expressions. The list has a fixed length `len' and each expression is sized up to `complexity'
+genExprList :: (Integral a, Bits a, ExprBase a) => Int -> Int -> Gen [Expr a]
+genExprList len complexity = (vectorOf len $ resize complexity arbitrary)
