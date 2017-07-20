@@ -1,4 +1,11 @@
-module Expression where
+module Expression
+  ( Expr
+  , ExprBase(..)
+  , printExpr
+  , eval
+  , variables
+  , genExprList
+  ) where
 
 import Data.Bits as Bit
 import Data.ByteString.Builder
