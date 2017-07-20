@@ -4,6 +4,7 @@ module Commandline
   , DataType(..)
   , Options(..)
   , commandLineOptions
+  , checkOptionsConsistency
   )
   where
 
@@ -12,6 +13,7 @@ import Data.Char
 import Data.List
 import Error
 import System.Console.GetOpt
+import System.IO
 import Text.Read
 
 
@@ -109,14 +111,16 @@ options =
       _              -> Left  $ "illegal " ++ desc ++ " `" ++ s ++ "'"
 
 
+-- |Usage info message
+usage :: String
+usage = usageInfo "Synopsis: fuzzer [options]" options
+
+
 -- |Parse the commandline
 commandLineOptions :: [String] -> IO Options
 commandLineOptions argv =
   case getOpt Permute options argv of
-    (acts, _, []) -> do opts <- evalutate acts
-                        when (optMode opts == CONV && optComplexity opts >= 8192) $
-                          exitWithError "Error: complexity for mode `conv' must be < 8192."
-                        return opts
+    (acts, _, []) -> evalutate acts
     (_, _, errs)  -> exitWithError $ concat (map ("Error: " ++) $ nub errs) ++ usage
 
   where
@@ -127,6 +131,14 @@ commandLineOptions argv =
                          return opts
 
 
--- |Usage info message
-usage :: String
-usage = usageInfo "Synopsis: fuzzer [options]" options
+-- |Consistency check for options
+checkOptionsConsistency :: Options -> IO Options
+checkOptionsConsistency opts = do
+  when (mode == CONV && complexity > 8192) $ exitWithError "Error: complexity for mode `conv' must be <= 8192."
+  when (complexity > 256) $ hPutStrLn stderr "Warning: selected complexity is very large."
+  when (chunkSize > 2048) $ hPutStrLn stderr "Warning: selected group size is very large."
+  return opts
+  where
+    mode       = optMode opts
+    complexity = optComplexity opts
+    chunkSize  = optChunkSize opts
