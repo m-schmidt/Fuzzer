@@ -7,6 +7,7 @@ module Check
 import Commandline
 import Control.Monad
 import ConventionTest
+import Data.Bits
 import Data.ByteString.Lazy.Char8 as L
 import Data.Word
 import Error
@@ -50,16 +51,16 @@ runTestScript script inputs = do
 
 
 -- |Evaluation of expressions over unsigned integer data types
-evalWord64Correct :: ExprList Word64 -> Property
+evalWord64Correct :: [Expr Word64] -> Property
 evalWord64Correct = evalExpressionCorrect $ runTestScript "./test1.sh"
 
-evalWord32Correct :: ExprList Word32 -> Property
+evalWord32Correct :: [Expr Word32] -> Property
 evalWord32Correct = evalExpressionCorrect $ runTestScript "./test1.sh"
 
-evalWord16Correct :: ExprList Word16 -> Property
+evalWord16Correct :: [Expr Word16] -> Property
 evalWord16Correct = evalExpressionCorrect $ runTestScript "./test1.sh"
 
-evalWord8Correct :: ExprList Word8 -> Property
+evalWord8Correct :: [Expr Word8] -> Property
 evalWord8Correct = evalExpressionCorrect $ runTestScript "./test1.sh"
 
 
@@ -67,17 +68,31 @@ evalWord8Correct = evalExpressionCorrect $ runTestScript "./test1.sh"
 checkExpressions :: Options -> IO ()
 checkExpressions opts =
   case optExprType opts of
-    UINT64 -> quickCheckWith args evalWord64Correct
-    UINT32 -> quickCheckWith args evalWord32Correct
-    UINT16 -> quickCheckWith args evalWord16Correct
-    UINT8  -> quickCheckWith args evalWord8Correct
+    UINT64 -> doCheck evalWord64Correct
+    UINT32 -> doCheck evalWord32Correct
+    UINT16 -> doCheck evalWord16Correct
+    UINT8  -> doCheck evalWord8Correct
   where
-    args = stdArgs { maxSuccess=optCount opts, maxSize=optSize opts }
+    doCheck :: (Integral a, Bits a, ExprBase a) => ([Expr a] -> Property) -> IO ()
+    doCheck p = quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genExprs shrinkExprs p
+
+    genExprs :: (Integral a, Bits a, ExprBase a) => Gen [Expr a]
+    genExprs = genExprList (optChunkSize opts) (optComplexity opts)
+
+    shrinkExprs = if optEnableShrink opts then shrinkList shrinkNothing else shrinkNothing
+
+
+-- |Calling convention correctly passes arguments
+conventionCorrect :: [Signature] -> Property
+conventionCorrect = simpleConventionCorrect $ runTestScript "./test2.sh"
 
 
 -- |Run random tests for calling conventions
 checkConventions :: Options -> IO ()
-checkConventions opts = quickCheckWith args prop
+checkConventions opts =
+  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genSigs shrinkSigs conventionCorrect
   where
-    args = stdArgs { maxSuccess=optCount opts, maxSize=optSize opts }
-    prop = simpleConventionCorrect $ runTestScript "./test2.sh"
+    genSigs :: Gen [Signature]
+    genSigs = genSignatureList (optChunkSize opts) (optComplexity opts)
+
+    shrinkSigs = if optEnableShrink opts then shrinkList shrinkNothing else shrinkNothing
