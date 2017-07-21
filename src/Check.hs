@@ -79,7 +79,8 @@ checkExpressions opts =
     genExprs :: (Integral a, Bits a, ExprBase a) => Gen [Expr a]
     genExprs = genExprList (optChunkSize opts) (optComplexity opts)
 
-    shrinkExprs = if optEnableShrink opts then map (:[]) else shrinkNothing
+    shrinkExprs :: (Integral a, Bits a, ExprBase a) => [Expr a] -> [[Expr a]]
+    shrinkExprs = if optEnableShrink opts then (map shrink) else shrinkNothing
 
 
 -- |Calling convention correctly passes arguments
@@ -95,4 +96,4 @@ checkConventions opts =
     genSigs :: Gen [Signature]
     genSigs = genSignatureList (optChunkSize opts) (optComplexity opts)
 
-    shrinkSigs = if optEnableShrink opts then map (:[]) else shrinkNothing
+    shrinkSigs = if optEnableShrink opts then (map shrink) else shrinkNothing
