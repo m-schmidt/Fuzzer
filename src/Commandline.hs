@@ -41,6 +41,7 @@ data Options = Options
   , optComplexity   :: Int        -- ^ Maximum complexity of test in a group
   , optShowHelp     :: Bool       -- ^ Show help and terminate program
   , optEnableShrink :: Bool       -- ^ Try to shrink on failing tests
+  , optPointer64    :: Bool       -- ^ Assume 64bit instead of 32bit wide pointers
   } deriving (Eq,Show)
 
 -- |Default values for command line options
@@ -53,6 +54,7 @@ defaultOptions = Options
   , optComplexity   = 30
   , optShowHelp     = False
   , optEnableShrink = True
+  , optPointer64    = False
   }
 
 
@@ -87,6 +89,10 @@ options =
       ["noshrink"]
       (NoArg (\opts -> Right opts { optEnableShrink = False }))
       "Disable shrinking on test failure."
+  , Option []
+      ["ptr64"]
+      (NoArg (\opts -> Right opts { optPointer64 = True }))
+      "Assume pointers to be 64bits wide. Defaults to 32bit."
   ]
   where
     defaultMode       = map toLower $ show $ optMode defaultOptions

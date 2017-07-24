@@ -13,35 +13,35 @@ import Test.QuickCheck.Monadic
 
 
 -- |Proposition that calling convention correctly passes arguments
-simpleConventionCorrect :: ([L.ByteString] -> IO Bool) -> [Signature] -> Property
-simpleConventionCorrect runTest sigs = monadicIO $ do
+simpleConventionCorrect :: Bool -> ([L.ByteString] -> IO Bool) -> [Signature] -> Property
+simpleConventionCorrect p64 runTest sigs = monadicIO $ do
   result <- run $ runTest [tst, drv]
   assert (result == True)
   where
-    tst = toLazyByteString $ testProgram sigs
-    drv = toLazyByteString $ driverProgram sigs
+    tst = toLazyByteString $ testProgram p64 sigs
+    drv = toLazyByteString $ driverProgram p64 sigs
 
 
 -- |Build program-part containing all test functions
-testProgram :: [Signature] -> Builder
-testProgram sigs = prefix <> intercalate (char8 '\n') functions
+testProgram :: Bool -> [Signature] -> Builder
+testProgram p64 sigs = prefix <> intercalate (char8 '\n') functions
   where
     prefix = string8 "#include <string.h>\n\n\
                      \#define BSIZE 65536\n\
                      \static unsigned char data_r [BSIZE];\n\
                      \extern unsigned char data_s [BSIZE];\n\n\
                      \#define BYTE_N(x,n) (((unsigned long long)(x) >> ((n) << 3)) & 0xff)\n\n"
-    functions = map (uncurry testFunction) $ zip [1..] sigs
+    functions = map (uncurry $ testFunction p64) $ zip [1..] sigs
 
 
 -- |Generate the code for a test function 'n' with a given signature
-testFunction :: Int -> Signature -> Builder
-testFunction n s =  signature n s
-                 <> string8 "\n{\n    int n = 0;\n\n"
-                 <> argbytes s
-                 <> string8 "\n\n    return (memcmp(data_s, data_r, n) != 0);\n}\n"
+testFunction :: Bool -> Int -> Signature -> Builder
+testFunction p64 n s =  signature n s
+                     <> string8 "\n{\n    int n = 0;\n\n"
+                     <> argbytes s
+                     <> string8 "\n\n    return (memcmp(data_s, data_r, n) != 0);\n}\n"
   where
-    argbytes (Signature args) = intercalate (char8 '\n') $ map (uncurry extractBytes) $ zip [1..] args
+    argbytes (Signature args) = intercalate (char8 '\n') $ map (uncurry $ extractBytes p64) $ zip [1..] args
 
 
 -- |Generate C signature for test function 'n'
@@ -57,8 +57,8 @@ signature n (Signature args)
 
 
 -- |Generate statements that copy all bytes of argument 'n' with type 't' into the comparison buffer
-extractBytes ::  Int -> ArgumentType -> Builder
-extractBytes n t =
+extractBytes ::  Bool -> Int -> ArgumentType -> Builder
+extractBytes p64 n t =
   let go byte | byte >= 0 =  (string8 "    data_r[n++] = BYTE_N(a"
                           <> intDec n
                           <> string8 ", "
@@ -66,15 +66,15 @@ extractBytes n t =
                           <> string8 ");" : go (byte - 1)
               | otherwise = []
   in
-    intercalate (char8 '\n') $ go $ argumentByteSize t - 1
+    intercalate (char8 '\n') $ go $ argumentByteSize p64 t - 1
 
 
 -- |Build program-part containing the driver program with calls to all test functions
-driverProgram :: [Signature] -> Builder
-driverProgram sigs = prefix <> prototypes <> mid <> functions <> suffix
+driverProgram :: Bool -> [Signature] -> Builder
+driverProgram p64 sigs = prefix <> prototypes <> mid <> functions <> suffix
   where
     prototypes = intercalate (char8 '\n') $ map (\(n,s) -> signature n s <> char8 ';') $ zip [1..] sigs
-    functions  = intercalate (char8 '\n') $ map (uncurry callTestFunction) $ zip [1..] sigs
+    functions  = intercalate (char8 '\n') $ map (uncurry $ callTestFunction p64) $ zip [1..] sigs
 
     prefix = string8 "#include <stdlib.h>\n\n\
                      \#define BSIZE 65536\n\
@@ -98,8 +98,8 @@ driverProgram sigs = prefix <> prototypes <> mid <> functions <> suffix
 
 
 -- |Generate statements to call test function 'n' with a given signature
-callTestFunction :: Int -> Signature -> Builder
-callTestFunction n (Signature args)
+callTestFunction :: Bool -> Int -> Signature -> Builder
+callTestFunction p64 n (Signature args)
   =  string8 "    n = 0;\n"
   <> setup args setupData
   <> string8 "    if (test"
@@ -112,12 +112,12 @@ callTestFunction n (Signature args)
   where
 
     setup (t:ts) sdata =
-      let (xs, restdata) = splitAt (argumentByteSize t) sdata in
+      let (xs, restdata) = splitAt (argumentByteSize p64 t) sdata in
       mconcat xs <> setup ts restdata
     setup [] _ = mempty
 
     arguments (t:ts) bs =
-      let (prefix, suffix) = splitAt (argumentByteSize t) bs in
+      let (prefix, suffix) = splitAt (argumentByteSize p64 t) bs in
       string8 "0x" <> wordHex (accumulate prefix) : arguments ts suffix
     arguments [] _ = []
 

@@ -29,13 +29,13 @@ printArgumentType t = case t of
   Pointer -> string8 "void *"
 
 -- |Size of data types in bytes
-argumentByteSize :: ArgumentType -> Int
-argumentByteSize t = case t of
+argumentByteSize :: Bool -> ArgumentType -> Int
+argumentByteSize p64 t = case t of
   I8      -> 1
   I16     -> 2
   I32     -> 4
   I64     -> 8
-  Pointer -> 4
+  Pointer -> if p64 then 8 else 4
 
 
 -- |A function signature is represented by a list of its argument types

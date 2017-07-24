@@ -84,16 +84,17 @@ checkExpressions opts =
 
 
 -- |Calling convention correctly passes arguments
-conventionCorrect :: [Signature] -> Property
-conventionCorrect = simpleConventionCorrect $ runTestScript "./test2.sh"
+conventionCorrect :: Bool -> [Signature] -> Property
+conventionCorrect p64 = simpleConventionCorrect p64 $ runTestScript "./test2.sh"
 
 
 -- |Run random tests for calling conventions
 checkConventions :: Options -> IO ()
 checkConventions opts =
-  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genSigs shrinkSigs conventionCorrect
+  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genSigs shrinkSigs $ conventionCorrect (optPointer64 opts)
   where
     genSigs :: Gen [Signature]
     genSigs = genSignatureList (optChunkSize opts) (optComplexity opts)
 
+    shrinkSigs :: [Signature] -> [[Signature]]
     shrinkSigs = if optEnableShrink opts then (map shrink) else shrinkNothing
