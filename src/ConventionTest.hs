@@ -119,7 +119,7 @@ callTestFunction p64 n (Signature args)
       | t==F32 || t==F64 =  string8 "        " <> printArgumentType t <> string8 " a" <> intDec i <> string8 ";\n"
       | otherwise        =  mempty
 
-    -- sequence of commands to setup data for one argument
+    -- sequence of statements to setup data for one argument
     setup i bs t =
       let (prefix, suffix) = splitAt (argumentByteSize p64 t) bs in
       (suffix, setup' i prefix t)
@@ -150,7 +150,7 @@ callTestFunction p64 n (Signature args)
 mapi :: (Int -> a -> b) -> [a] -> [b]
 mapi f list = map (\(i, a) -> f i a) $ zip [1..] list
 
--- |Like mapAccumL map but with an additional counter argument, also the final accumulator value is skipped
+-- |Like mapAccumL map but with an additional counter argument, also the final accumulator value is ignored
 mapiAccumL_ :: (Int -> a -> b -> (a, c)) -> a -> [b] -> [c]
 mapiAccumL_ f a bs = let (_, cs) = mapAccumL (\acc (i, b) -> f i acc b) a (zip [1..] bs) in cs
 
