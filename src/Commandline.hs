@@ -23,7 +23,7 @@ data TestMode
   | CONV      -- ^ Test calling conventions
   deriving (Eq,Show,Read)
 
--- |Supported types for testing
+-- |Supported types for expression testing
 data DataType
   = UINT64
   | UINT32

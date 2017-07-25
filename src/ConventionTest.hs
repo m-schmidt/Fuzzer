@@ -12,8 +12,6 @@ import Test.QuickCheck
 import Test.QuickCheck.Monadic
 
 
-
-
 -- |Proposition that calling convention correctly passes arguments
 simpleConventionCorrect :: Bool -> ([L.ByteString] -> IO Bool) -> [Signature] -> Property
 simpleConventionCorrect p64 runScript sigs = monadicIO $ do
@@ -73,8 +71,7 @@ extractBytes p64 n t =
     newlineSeparated $ go $ (argumentByteSize p64 t) - 1
 
 
-
--- |Build program-part containing the driver program with calls to all test functions
+-- |Build program-part containing the driver function with calls to all test functions
 driverProgram :: Bool -> [Signature] -> Builder
 driverProgram p64 sigs = codePrefix <> prototypes <> mainPrefix <> functions <> mainSuffix
   where
