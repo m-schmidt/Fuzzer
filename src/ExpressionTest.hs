@@ -15,8 +15,8 @@ import Test.QuickCheck.Monadic
 
 -- |Proposition that evaluating expressions works
 evalExpressionCorrect :: (Integral a, Bits a, ExprBase a) => ([L.ByteString] -> IO Bool) -> [Expr a] -> Property
-evalExpressionCorrect runTest el = monadicIO $ do
-  result <- run $ runTest . genCode $ el
+evalExpressionCorrect runScript el = monadicIO $ do
+  result <- run $ runScript . genCode $ el
   assert (result == True)
 
 

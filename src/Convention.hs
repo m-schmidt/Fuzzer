@@ -1,6 +1,6 @@
 module Convention
   ( Signature(..)
-  , ArgumentType
+  , ArgumentType(..)
   , printArgumentType
   , argumentByteSize
   , genSignatureList
@@ -10,12 +10,14 @@ import Data.ByteString.Builder
 import Test.QuickCheck
 
 
--- |Datatype for function arguments: integers of different sizes and a pointer type
+-- |Datatype for function arguments: integers and floating points of different sizes and a pointer type
 data ArgumentType
   = I8
   | I16
   | I32
   | I64
+  | F32
+  | F64
   | Pointer
   deriving (Eq, Enum, Bounded, Ord, Show)
 
@@ -26,6 +28,8 @@ printArgumentType t = case t of
   I16     -> string8 "unsigned short"
   I32     -> string8 "unsigned int"
   I64     -> string8 "unsigned long long"
+  F32     -> string8 "float"
+  F64     -> string8 "double"
   Pointer -> string8 "void *"
 
 -- |Size of data types in bytes
@@ -35,6 +39,8 @@ argumentByteSize p64 t = case t of
   I16     -> 2
   I32     -> 4
   I64     -> 8
+  F32     -> 4
+  F64     -> 8
   Pointer -> if p64 then 8 else 4
 
 
