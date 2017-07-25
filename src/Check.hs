@@ -9,6 +9,7 @@ import Control.Monad
 import ConventionTest
 import Data.Bits
 import Data.ByteString.Lazy.Char8 as L (ByteString, hPutStr)
+import Data.List
 import Data.Word
 import Error
 import ExpressionTest
@@ -80,7 +81,7 @@ checkExpressions opts =
     genExprs = genExprList (optChunkSize opts) (optComplexity opts)
 
     shrinkExprs :: (Integral a, Bits a, ExprBase a) => [Expr a] -> [[Expr a]]
-    shrinkExprs = if optEnableShrink opts then (map shrink) else shrinkNothing
+    shrinkExprs = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
 
 
 -- |Calling convention correctly passes arguments
@@ -97,4 +98,4 @@ checkConventions opts =
     genSigs = genSignatureList (optChunkSize opts) (optComplexity opts)
 
     shrinkSigs :: [Signature] -> [[Signature]]
-    shrinkSigs = if optEnableShrink opts then (map shrink) else shrinkNothing
+    shrinkSigs = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
