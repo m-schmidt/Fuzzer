@@ -26,7 +26,10 @@ simpleConventionCorrect p64 runScript sigs = monadicIO $ do
 testProgram :: Bool -> [Signature] -> Builder
 testProgram p64 sigs = prefix <> newlineSeparated functions
   where
-    prefix = string8 "#include <string.h>\n\n\
+    prefix = string8 "#include <string.h>\n\
+                     \#ifdef DEBUG\n\
+                     \# include <stdio.h>\n\
+                     \#endif\n\n\
                      \#define BSIZE 65536\n\
                      \static unsigned char data_r [BSIZE];\n\
                      \extern unsigned char data_s [BSIZE];\n\n\
@@ -40,7 +43,17 @@ testFunction :: Bool -> Int -> Signature -> Builder
 testFunction p64 n s =  signature n s
                      <> string8 "\n{\n    int n = 0;\n\n"
                      <> argbytes s
-                     <> string8 "\n\n    return (memcmp(data_s, data_r, n) != 0);\n}\n"
+                     <> string8 "\n\n#   ifdef DEBUG\n\
+                                \    if (memcmp(data_s, data_r, n) != 0)\n\
+                                \    {\n\
+                                \        int i;\n\
+                                \        for (i=0; i<n; i++)\n\
+                                \        {\n\
+                                \            printf(\"%3d: %02x %02x%s\n\", i, data_s[i], data_r[i], data_s[i]!=data_r[i] ? \" <---\" : \"\");\n\
+                                \        }\n\
+                                \    }\n\
+                                \#   endif\n\n\
+                                \    return (memcmp(data_s, data_r, n) != 0);\n}\n"
   where
     argbytes (Signature args) = newlineSeparated $ mapi (extractBytes p64) args
 
