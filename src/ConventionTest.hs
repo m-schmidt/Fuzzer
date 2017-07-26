@@ -49,7 +49,7 @@ testFunction p64 n s =  signature n s
                                 \        int i;\n\
                                 \        for (i=0; i<n; i++)\n\
                                 \        {\n\
-                                \            printf(\"%3d: %02x %02x%s\n\", i, data_s[i], data_r[i], data_s[i]!=data_r[i] ? \" <---\" : \"\");\n\
+                                \            printf(\"%3d: %02x %02x%s\\n\", i, data_s[i], data_r[i], data_s[i]!=data_r[i] ? \" <---\" : \"\");\n\
                                 \        }\n\
                                 \    }\n\
                                 \#   endif\n\n\
