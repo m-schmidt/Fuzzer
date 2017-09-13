@@ -1,6 +1,6 @@
 # Fuzzing C-Compilers with QuickCheck
 
-This is an experimental tool that uses QuickCheck to generate random C programs. Testing is done via a monadic action that writes the generated C program into a temporary file on disc and invoking an external shell script to act on it. The exit code of the shell script is used to trigger test failures.
+This is an experimental tool that uses QuickCheck to generate random C programs. Testing is done via a monadic action that writes the generated C program into a temporary file(s) on disc and invoking an external shell script to act on it. The exit code of the shell script is used to trigger test failures.
 
 
 ## How to Build
@@ -12,13 +12,13 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
 ## Usage
 
-- Create test scripts `test1.sh` and `test2.sh` in the current working directory and make them executable. The fuzzer calls these script with the generated C programs. The exit code should indicate success or failure.
+- Create test scripts `test1.sh` (for expression testing mode) and `test2.sh` (for calling conventions mode) in the current working directory and make them executable. The fuzzer calls these scripts with the generated C programs. The exit code of the scripts should indicate success or failure.
 
 - To start the fuzzer, type:
 
       $ stack exec fuzzer
 
-- The fuzzer supports some commandline options to select a datatype and a test count. See the online help with:
+- The fuzzer supports some commandline options to select a testing mode, the complexity, and test count etc. See the online help with:
 
       $ stack exec fuzzer -- -h
 
@@ -29,4 +29,4 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
 ## Note
 
-The generated C code assumes that the datatypes `unsigned char`, `unsigned short`, `unsigned int`, and `unsigned long long` have sizes of 8, 16, 32, and 64 bits respectively.
+The generated C code assumes that the datatypes `unsigned char`, `unsigned short`, `unsigned int`, and `unsigned long long` have sizes of 8, 16, 32, and 64 bits respectively. The size of pointers is assumed to be 32 bits by default. 64 bit pointers can be enabled via a commandline option.
