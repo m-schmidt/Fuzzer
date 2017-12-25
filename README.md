@@ -7,7 +7,6 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
 - Clone the repository and within the project directory type:
 
-      $ stack setup
       $ stack build
 
 ## Usage
