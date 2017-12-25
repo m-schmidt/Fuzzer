@@ -45,9 +45,9 @@ codePrefix = string8 "#include <stdio.h>\n\
 
 -- |Sequence of test functions that each check one expression
 testFunctions :: (Integral a, Bits a, ExprBase a) => [(Int, Expr a)] -> Builder
-testFunctions = mconcat . map function
+testFunctions = mconcat . map func
   where
-    function (n, x) = prefix <> intDec n <> begin <> decls (variables x) <> test x <> end
+    func (n, x) = prefix <> intDec n <> begin <> decls (variables x) <> test x <> end
 
     prefix = string8 "int test"
     begin  = string8 "(void)\n{\n"
