@@ -181,7 +181,7 @@ variables = Set.toAscList . go Set.empty
 
 -- |Random expressions for QuickCheck
 instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
-  -- |Geneator for random expressions
+  -- |Generator for random expressions
   arbitrary = sized expr
     where
       expr :: (Integral a, Bits a, ExprBase a) => Int -> Gen (Expr a)
