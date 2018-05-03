@@ -19,9 +19,9 @@ import Test.QuickCheck
 
 -- |Base types for expressions
 class Show a => ExprBase a where
-  printType :: a -> Builder    -- ^ Print corresponding C data type
+  printType  :: a -> Builder   -- ^ Print corresponding C data type
   printConst :: a -> Builder   -- ^ Print value as constant in C syntax
-  amounts :: a -> [a]          -- ^ Shift amounts
+  amounts    :: a -> [a]       -- ^ Shift amounts
   immediates :: a -> [a]       -- ^ Selected immediate values
 
 instance ExprBase Word64 where

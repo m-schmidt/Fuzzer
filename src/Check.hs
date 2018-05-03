@@ -86,7 +86,7 @@ checkExpressions opts =
 
 -- |Calling convention correctly passes arguments
 conventionCorrect :: Bool -> [Signature] -> Property
-conventionCorrect p64 = simpleConventionCorrect p64 $ runTestScript "./test2.sh"
+conventionCorrect ptr64 = simpleConventionCorrect ptr64 $ runTestScript "./test2.sh"
 
 
 -- |Run random tests for calling conventions
