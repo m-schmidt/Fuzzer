@@ -28,4 +28,4 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
 ## Note
 
-The generated C code assumes that the datatypes `unsigned char`, `unsigned short`, `unsigned int`, and `unsigned long long` have sizes of 8, 16, 32, and 64 bits respectively. The size of pointers is assumed to be 32 bits by default. 64 bit pointers can be enabled via a commandline option.
+The generated C code assumes that the datatypes `unsigned char`, `unsigned short`, `unsigned int`, and `unsigned long long` have sizes of 8, 16, 32, and 64 bits respectively. The size of pointers is assumed to be 32 bits by default. 64 bit pointers can be enabled via the commandline option `--ptr64`.
