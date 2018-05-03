@@ -33,7 +33,7 @@ checkExecutable path = do
 runTestScript :: String -> [L.ByteString] -> IO Bool
 runTestScript script inputs = do
   checkExecutable script
-  -- write c program(s) into temporary files
+  -- write C program(s) into temporary files
   tmps <- forM inputs writeTmp
   -- run test script on temporary files
   (code, _, _) <- readProcessWithExitCode script tmps ""
