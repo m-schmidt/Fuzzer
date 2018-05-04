@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 module ConventionTest
   ( module Convention
   , simpleConventionCorrect
@@ -8,6 +10,7 @@ import Data.ByteString.Builder
 import Data.List (intersperse, mapAccumL)
 import Data.Monoid
 import qualified Data.ByteString.Lazy.Char8 as L
+import Str
 import Test.QuickCheck
 import Test.QuickCheck.Monadic
 
@@ -24,18 +27,26 @@ simpleConventionCorrect p64 runScript sigs = monadicIO $ do
 
 -- |Build program-part containing all test functions
 testProgram :: Bool -> [Signature] -> Builder
-testProgram p64 sigs = prefix <> newlineSeparated functions
+testProgram p64 sigs = testPrefix <> newlineSeparated functions
   where
-    prefix = string8 "#include <string.h>\n\
-                     \#ifdef DEBUG\n\
-                     \# include <stdio.h>\n\
-                     \#endif\n\n\
-                     \#define BSIZE 65536\n\
-                     \static unsigned char data_r [BSIZE];\n\
-                     \extern unsigned char data_s [BSIZE];\n\n\
-                     \#define BYTE_IN(x,n) (((unsigned long long)(x) >> ((n) << 3)) & 0xff)\n\
-                     \#define BYTE_FN(x,n) (((unsigned char *)(&(x))) [sizeof(x) - 1 - (n)])\n\n"
-    functions = mapi (testFunction p64) sigs
+    functions  = mapi (testFunction p64) sigs
+
+testPrefix :: Builder
+testPrefix = string8 [str|
+#include <string.h>
+
+#ifdef DEBUG
+# include <stdio.h>
+#endif
+
+#define BSIZE 65536
+static unsigned char data_r [BSIZE];
+extern unsigned char data_s [BSIZE];
+
+#define BYTE_IN(x,n) (((unsigned long long)(x) >> ((n) << 3)) & 0xff)
+#define BYTE_FN(x,n) (((unsigned char *)(&(x))) [sizeof(x) - 1 - (n)])
+
+|]
 
 
 -- |Generate the code for a test function 'n' with a given signature
@@ -43,19 +54,27 @@ testFunction :: Bool -> Int -> Signature -> Builder
 testFunction p64 n s =  signature n s
                      <> string8 "\n{\n    int n = 0;\n\n"
                      <> argbytes s
-                     <> string8 "\n\n#   ifdef DEBUG\n\
-                                \    if (memcmp(data_s, data_r, n) != 0)\n\
-                                \    {\n\
-                                \        int i;\n\
-                                \        for (i=0; i<n; i++)\n\
-                                \        {\n\
-                                \            printf(\"%3d: %02x %02x%s\\n\", i, data_s[i], data_r[i], data_s[i]!=data_r[i] ? \" <---\" : \"\");\n\
-                                \        }\n\
-                                \    }\n\
-                                \#   endif\n\n\
-                                \    return (memcmp(data_s, data_r, n) != 0);\n}\n"
+                     <> testFunctionSuffix
   where
     argbytes (Signature args) = newlineSeparated $ mapi (extractBytes p64) args
+
+testFunctionSuffix :: Builder
+testFunctionSuffix = string8 [str|
+
+#   ifdef DEBUG
+    if (memcmp(data_s, data_r, n) != 0)
+    {
+        int i;
+        for (i=0; i<n; i++)
+        {
+            printf("%3d: %02x %02x%s\n", i, data_s[i], data_r[i], data_s[i]!=data_r[i] ? " <---" : "");
+        }
+    }
+#   endif
+
+    return (memcmp(data_s, data_r, n) != 0);
+}
+|]
 
 
 -- |Generate C signature for test function 'n'
@@ -86,31 +105,44 @@ extractBytes p64 n t =
 
 -- |Build program-part containing the driver function with calls to all test functions
 driverProgram :: Bool -> [Signature] -> Builder
-driverProgram p64 sigs = codePrefix <> prototypes <> mainPrefix <> functions <> mainSuffix
+driverProgram p64 sigs = driverPrefix <> prototypes <> mainPrefix <> functions <> mainSuffix
   where
     prototypes = newlineSeparated $ mapi (\i s -> signature i s <> char8 ';') sigs
     functions  = newlineSeparated $ mapi (callTestFunction p64) sigs
 
-    codePrefix = string8 "#include <stdlib.h>\n\n\
-                         \#define BSIZE 65536\n\
-                         \unsigned char data_s [BSIZE];\n\n\
-                         \void exit_ok(void)\n\
-                         \{\n\
-                         \    exit(EXIT_SUCCESS);\n\
-                         \}\n\n\
-                         \void exit_evil(int status)\n\
-                         \{\n\
-                         \    exit(status);\n\
-                         \}\n\n"
+driverPrefix :: Builder
+driverPrefix = string8 [str|
+#include <stdlib.h>
 
-    mainPrefix = string8 "\n\nint main(void)\n\
-                         \{\n\
-                         \    int n, m;\n\
-                         \    unsigned char data_fp [8];\n\n"
+#define BSIZE 65536
+unsigned char data_s [BSIZE];
 
-    mainSuffix = string8 "\n    exit_ok();\n\
-                         \    return 0;\n\
-                         \}"
+void exit_ok(void)
+{
+    exit(EXIT_SUCCESS);
+}
+
+void exit_evil(int status)
+{
+    exit(status);
+}
+
+|]
+
+mainPrefix :: Builder
+mainPrefix = string8 [str|
+
+int main(void)
+{
+    int n, m;
+    unsigned char data_fp [8];
+|]
+
+mainSuffix :: Builder
+mainSuffix = string8 [str|
+    exit_ok();
+    return 0;
+}|]
 
 
 -- |Generate statements to call test function 'n' with a given signature
