@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 module ExpressionTest
   ( module Expression
   , evalExpressionCorrect
@@ -9,9 +11,9 @@ import Data.Maybe
 import Data.Monoid
 import Expression
 import qualified Data.ByteString.Lazy.Char8 as L
+import Str
 import Test.QuickCheck
 import Test.QuickCheck.Monadic
-
 
 -- |Proposition that evaluating expressions works
 evalExpressionCorrect :: (Integral a, Bits a, ExprBase a) => ([L.ByteString] -> IO Bool) -> [Expr a] -> Property
@@ -31,16 +33,20 @@ genCode exprs = [toLazyByteString $  codePrefix
 
 -- |Program head with include statements and the exit-functions
 codePrefix :: Builder
-codePrefix = string8 "#include <stdio.h>\n\
-                      \#include <stdlib.h>\n\n\
-                      \void exit_ok(void)\n\
-                      \{\n\
-                      \    exit(EXIT_SUCCESS);\n\
-                      \}\n\n\
-                      \void exit_evil(int status)\n\
-                      \{\n\
-                      \    exit(status);\n\
-                      \}\n\n"
+codePrefix = string8 [str|
+#include <stdio.h>
+#include <stdlib.h>
+
+void exit_ok(void)
+{
+    exit(EXIT_SUCCESS);
+}
+
+void exit_evil(int status)
+{
+    exit(status);
+}
+|]
 
 
 -- |Sequence of test functions that each check one expression
@@ -49,9 +55,9 @@ testFunctions = mconcat . map func
   where
     func (n, x) = prefix <> intDec n <> begin <> decls (variables x) <> test x <> end
 
-    prefix = string8 "int test"
+    prefix = string8 "\nint test"
     begin  = string8 "(void)\n{\n"
-    end    = string8 ");\n}\n\n"
+    end    = string8 ");\n}\n"
     decls  = mconcat . map decl
     test x =
       let val = fromJust $ eval x
@@ -76,7 +82,10 @@ decl (name, val) = string8 "    volatile "
 
 -- |Head of main function before calls to test functions
 mainPrefix :: Builder
-mainPrefix = string8 "int main(void)\n{\n"
+mainPrefix = string8 [str|
+int main(void)
+{
+|]
 
 
 -- |Sequence of calls to test functions
@@ -91,4 +100,8 @@ testCalls = mconcat . map call
 
 -- |Footer of main function after calls to test functions
 mainSuffix :: Builder
-mainSuffix = string8 "    exit_ok();\n    return 0;\n}\n"
+mainSuffix = string8 [str|
+    exit_ok();
+    return 0;
+}
+|]
