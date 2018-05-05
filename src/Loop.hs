@@ -13,7 +13,7 @@ import Data.Monoid
 
 -- |Specification for a loop
 data Loop = Loop LoopType         -- ^ Type of loop
-                 CounterType      -- ^ Type of loop counter
+                 CounterType      -- ^ Type of loop counter variable
                  ConditionType    -- ^ Exit condition
                  Constant         -- ^ Start value for loop counter
                  Constant         -- ^ Increment value for loop counter
@@ -30,7 +30,7 @@ data LoopType
   deriving (Eq, Enum, Bounded, Ord, Show)
 
 
--- |C data type information for loop counters
+-- |Information for data type of loop counter variable
 data CounterType = CounterType
   { signed   :: Bool
   , bitwidth :: Integer
