@@ -21,6 +21,8 @@ executable fuzzer
                      , Error
                      , Expression
                      , ExpressionTest
+                     , Loop
+                     , LoopTest
                      , Str
   default-language:    Haskell2010
   build-depends:       base >= 4.10 && < 4.11
