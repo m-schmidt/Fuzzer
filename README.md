@@ -1,6 +1,6 @@
 # Fuzzing C-Compilers with QuickCheck
 
-This is an experimental tool that uses QuickCheck to generate random C programs. Testing is done via a monadic action that writes the generated C program into a temporary file(s) on disc and invoking an external shell script to act on it. The exit code of the shell script is used to trigger test failures.
+This is an experimental tool that uses QuickCheck to generate random C programs. Testing is done via a monadic action that writes the generated C program into temporary file(s) on disc and invoking an external shell script to act on the program. The exit code of the shell script is used to trigger test failures.
 
 
 ## How to Build
@@ -11,7 +11,7 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
 ## Usage
 
-- Create test scripts `test1.sh` (for expression testing mode) and `test2.sh` (for calling conventions mode) in the current working directory and make them executable. The fuzzer calls these scripts with the generated C programs. The exit code of the scripts should indicate success or failure.
+- Create test scripts `test1.sh` (for expression and loop bound testing modes) and `test2.sh` (for calling conventions mode) in the current working directory and make them executable. The fuzzer calls these scripts with the generated C programs. The exit code of the scripts should indicate success or failure.
 
 - To start the fuzzer, type:
 
