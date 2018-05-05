@@ -11,4 +11,4 @@ main = do
   case optMode opts of
     EXPR -> checkExpressions opts
     CONV -> checkConventions opts
-    LOOP -> undefined
+    LOOP -> checkLoopbounds opts

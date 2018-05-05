@@ -1,6 +1,7 @@
 module Check
   ( checkExpressions
   , checkConventions
+  , checkLoopbounds
   ) where
 
 
@@ -99,3 +100,8 @@ checkConventions opts =
 
     shrinkSigs :: [Signature] -> [[Signature]]
     shrinkSigs = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
+
+
+-- |Run random tests for loops
+checkLoopbounds :: Options -> IO ()
+checkLoopbounds _ = undefined
