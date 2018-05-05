@@ -30,7 +30,7 @@ data LoopType
   deriving (Eq, Enum, Bounded, Ord, Show)
 
 
--- |C data types for loop counters
+-- |C data type information for loop counters
 data CounterType = CounterType
   { signed   :: Bool
   , bitwidth :: Integer
@@ -184,7 +184,7 @@ instance Arbitrary Loop where
           GreaterEqual -> start + (bound-1) * increment
           NotEqual     -> start +  bound    * increment
 
-      -- |Random type for casting the loop counter that such that the cast has no effect on the loop bound
+      -- |Random type for casting the loop counter such that the cast has no effect on the loop bound
       randomCastType :: CounterType -> Integer -> Integer -> Integer -> Gen CounterType
       randomCastType ct s i e = oneof [return ct, randomCounterType `suchThat` valid]
         where

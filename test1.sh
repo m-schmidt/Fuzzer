@@ -1,5 +1,5 @@
 #!/bin/sh
-# Test script used for expression evaluation tests
+# Test script used for expression evaluation and loop bound tests
 
 # The script gets one file containing the C code as parameter.
 INPUTFILE=$1
