@@ -28,7 +28,7 @@ data LoopType
   deriving (Eq, Enum, Bounded, Ord, Show)
 
 
--- |C datatypes for loop counter specifying signedness and bit width
+-- |C data types for loop counter specifying signedness and bit width
 data CounterType = CounterType
   { signed   :: Bool
   , bitwidth :: Integer
@@ -52,7 +52,7 @@ data Constant = Constant CounterType Integer
   deriving (Eq, Show)
 
 
--- |Printer for loop counter data type in C syntax
+-- |Printer for loop counter data type
 printCounterType :: CounterType -> Builder
 printCounterType t = signPrefix <> baseType
   where
@@ -65,7 +65,7 @@ printCounterType t = signPrefix <> baseType
                              _  -> undefined
 
 
--- |Printer for comparion operators
+-- |Printer for comparison operators
 printCondition :: ConditionType -> Builder
 printCondition c = case c of
   LessThan     -> string8 " < "
