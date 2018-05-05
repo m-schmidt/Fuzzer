@@ -21,6 +21,7 @@ import Text.Read
 data TestMode
   = EXPR      -- ^ Test evaluation of expressions
   | CONV      -- ^ Test calling conventions
+  | LOOP      -- ^ Test loops
   deriving (Eq,Show,Read)
 
 -- |Supported types for expression testing
@@ -68,11 +69,7 @@ options =
   , Option ['m']
       ["mode"]
       (ReqArg convertMode "MODE")
-      ("Select mode for testing, either `expr' or `conv'. Defaults to `" ++ defaultMode ++ "'.")
-  , Option ['t']
-      ["type"]
-      (ReqArg convertType "TYPE")
-      ("Set data type for expression tests to `uint8', `uint16', `uint32' or `uint64'. Defaults to `" ++ defaultExprType ++ "'.")
+      ("Select mode for testing, either `expr', `conv', or `loop'. Defaults to `" ++ defaultMode ++ "'.")
   , Option ['n']
       ["number"]
       (ReqArg (convertInt "number of tests" (\i opts -> opts { optNumTests = i })) "NUMBER")
@@ -85,14 +82,18 @@ options =
       ["groupsize"]
       (ReqArg (convertInt "number of tests" (\i opts -> opts { optChunkSize = i })) "NUMBER")
       ("Number of tests per call to external test-script. Defaults to " ++ defaultChunkSize ++ ".")
+  , Option ['t']
+      ["type"]
+      (ReqArg convertType "TYPE")
+      ("Set data type for mode `expr' to `uint8', `uint16', `uint32', or `uint64'. Defaults to `" ++ defaultExprType ++ "'.")
+  , Option []
+      ["ptr64"]
+      (NoArg (\opts -> Right opts { optPointer64 = True }))
+      "Assume 64-bit pointers for mode `conv'. Defaults to 32-bit pointers."
   , Option []
       ["noshrink"]
       (NoArg (\opts -> Right opts { optEnableShrink = False }))
       "Disable shrinking on test failure."
-  , Option []
-      ["ptr64"]
-      (NoArg (\opts -> Right opts { optPointer64 = True }))
-      "Assume pointers to be 64bits wide. Defaults to 32bit."
   ]
   where
     defaultMode       = map toLower $ show $ optMode defaultOptions
