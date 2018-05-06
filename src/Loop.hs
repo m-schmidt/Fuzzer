@@ -113,7 +113,7 @@ instance Arbitrary Loop where
         ct        <- randomCounterType
         bound     <- randomLoopBound n lt ct
         start     <- randomStartValue n ct
-        increment <- randomIncrement n ct `suchThat` \i -> bound == 0 || inRange ct (start + bound * i)
+        increment <- randomIncrement n ct `suchThat` \i -> bound == 0 || (i /= 0 && inRange ct (start + bound * i))
         cond      <- randomCondition increment
         let end = loopCounterEndValue cond start bound increment
         cts       <- randomCastType ct start increment end

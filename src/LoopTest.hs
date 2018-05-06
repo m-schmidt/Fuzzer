@@ -95,10 +95,12 @@ testFunction n (Loop lt ct cond (Constant cts start) (Constant cti increment) (C
             <> loopAnnot bound
             <> updateCount
             <> string8 "    }\n    while (" <> checkExit <> string8 ");\n"
+
       For   -> string8 "    for (i = " <> startValue <> string8 "; " <> checkExit <> string8 "; " <> incCounter increment <> string8 ")\n    {\n"
             <> loopAnnot bound
             <> updateCount
             <> string8 "    }\n"
+
       While -> setupCounter
             <> string8 "    while (" <> checkExit <> string8 ")\n    {\n"
             <> incCounterStamement
