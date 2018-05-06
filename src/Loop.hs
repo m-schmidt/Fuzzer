@@ -45,7 +45,6 @@ data CounterType = CounterType
 -- |Smart constructor that handles the representable range according the bit width
 mkCounterType :: Bool -> Integer -> CounterType
 mkCounterType s n
- | s == True && n == 64 = CounterType s n (- 2^(n-1) + 1) (2^(n-1) - 1) -- avoid signed minimum for 64bit types
  | s == True            = CounterType s n (- 2^(n-1))     (2^(n-1) - 1)
  | otherwise            = CounterType s n 0               (2^n - 1)
 
@@ -95,8 +94,10 @@ printCondition c = case c of
 
 -- |Printer for immediate constants
 printConstant :: CounterType -> Integer -> Builder
-printConstant t v = integerDec v <> signSuffix <> widthSuffix
+printConstant t v = integerVal <> signSuffix <> widthSuffix
   where
+    integerVal | v == -9223372036854775808 = string8 "0x8000000000000000"
+               | otherwise                 = integerDec v
     signSuffix  = string8 $ if signed t then "" else "u"
     widthSuffix = string8 $ case bitwidth t of
                               32 -> "l"
