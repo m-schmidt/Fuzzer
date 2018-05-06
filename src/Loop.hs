@@ -107,8 +107,9 @@ printConstant t v = integerVal <> signSuffix <> widthSuffix
 
 -- |Random, but valid loop specifications for QuickCheck
 instance Arbitrary Loop where
-  arbitrary = sized validLoop
+  arbitrary = frequency [ (9, sized validLoop), (1, sized overflowLoop) ]
     where
+      -- normal valid loops
       validLoop :: Int -> Gen Loop
       validLoop n = do
         lt        <- randomLoopType
@@ -124,6 +125,21 @@ instance Arbitrary Loop where
         cti       <- randomCastType ct start increment end
         cte       <- randomCastType ct start increment end
         return $ Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) bound
+
+      -- loop with bound 1 that wrap around on unsigned loop counter types
+      overflowLoop :: Int -> Gen Loop
+      overflowLoop n = do
+        lt        <- randomLoopType
+        ct        <- mkCounterType False <$> randomBitWidth
+        let modulus = 2^(bitwidth ct)
+        let bound = 1
+        start     <- randomStartValue n ct
+        delta     <- randomIncrement n ct `suchThat` \i -> (i /= 0 && inRange ct (start + i))
+        let end = start + delta
+        let increment = delta - modulus * signum delta
+        cts       <- randomCastType ct start increment end
+        cte       <- randomCastType ct start increment end
+        return $ Loop lt ct NotEqual (Constant cts start) (Constant ct increment) (Constant cte end) bound
 
 
 -- |Random type of loop
@@ -184,7 +200,7 @@ randomIncrement n ct = frequency [ (2, sizedIncrement)
     rmax = rMax ct `div` 8
 
 
--- |Random abort condition for loop, depends on direction of increment
+-- |Random abort condition for loop depending on direction of increment
 randomCondition :: Integer -> Gen ConditionType
 randomCondition increment
   | increment  < 0 = elements [GreaterThan, GreaterEqual, NotEqual]
