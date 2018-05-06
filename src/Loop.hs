@@ -1,5 +1,7 @@
 module Loop
   ( Loop(..)
+  , LoopType(..)
+  , Constant(..)
   , printCounterType
   , printCondition
   , printConstant
@@ -113,82 +115,95 @@ instance Arbitrary Loop where
         start     <- randomStartValue n ct
         increment <- randomIncrement n ct `suchThat` \i -> bound == 0 || inRange ct (start + bound * i)
         cond      <- randomCondition increment
-        let end = endValue cond start bound increment
+        let end = loopCounterEndValue cond start bound increment
         cts       <- randomCastType ct start increment end
         cti       <- randomCastType ct start increment end
         cte       <- randomCastType ct start increment end
         return $ Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) bound
 
-      -- |Random type of loop
-      randomLoopType :: Gen LoopType
-      randomLoopType = elements [Do, For, While]
 
-      -- |Random data type for the loop counter variable
-      randomCounterType :: Gen CounterType
-      randomCounterType = mkCounterType
-                          <$> elements [True, False]
-                          <*> elements [8, 16, 32, 64]
+-- |Random type of loop
+randomLoopType :: Gen LoopType
+randomLoopType = elements [Do, For, While]
 
-      -- |Random loop bound, sized and also depending on the types of the loop and the loop counter variable
-      randomLoopBound :: Int -> LoopType -> CounterType -> Gen Integer
-      randomLoopBound n lt ct = choose (bMin, bMax)
-        where
-            bMin = if lt == Do then 1 else 0
-            bMax = min (fromIntegral n) ((rMax ct - rMin ct) `div` 4)
 
-      -- |Random start value for loop counter
-      randomStartValue :: Int -> CounterType -> Gen Integer
-      randomStartValue n ct
-        | signed ct = frequency [(1, fromRange), (2, nearBegin), (2, nearEnd), (2, nearZero)]
-        | otherwise = frequency [(1, fromRange), (3, nearBegin), (3, nearEnd)]
-        where
-          -- value near beginning of representable range
-          nearBegin = choose (rMin ct, rMin ct + distance)
-          -- value near end of representable range
-          nearEnd   = choose (rMax ct - distance, rMax ct)
-          -- value from full representable range
-          fromRange = choose (rMin ct, rMax ct)
-          -- value near zero
-          nearZero  = choose (-distance, distance)
-          -- maximum allowed distance
-          distance  = min (fromIntegral n) ((rMax ct - rMin ct) `div` 2)
+-- |Random data type for the loop counter variable
+randomCounterType :: Gen CounterType
+randomCounterType = mkCounterType
+                    <$> elements [True, False]
+                    <*> randomBitWidth
 
-      -- |Random increment value for loop counter
-      randomIncrement :: Int -> CounterType -> Gen Integer
-      randomIncrement n ct = frequency [ (2, sizedIncrement)
-                                       , (2, negate <$> sizedIncrement)
-                                       , (1, rangeIncrement)
-                                       ]
-        where
-          -- value depending on complexity and representable range
-          sizedIncrement = choose (0, min (fromIntegral n) rmax)
-          -- value depending only on representable range
-          rangeIncrement = choose (- rmax, rmax)
-          -- maximum increment value depending on representable range
-          rmax = rMax ct `div` 8
 
-      -- |Random abort condition for loop, depends on direction of increment
-      randomCondition :: Integer -> Gen ConditionType
-      randomCondition increment
-        | increment  < 0 = elements [GreaterThan, GreaterEqual, NotEqual]
-        | increment == 0 = elements [LessThan, GreaterThan]
-        | otherwise      = elements [LessThan, LessEqual, NotEqual]
+-- |Random bit width for C integer data types
+randomBitWidth :: Gen Integer
+randomBitWidth = elements [8, 16, 32, 64]
 
-      -- |End value of loop counter that leads to abort of loop
-      endValue :: ConditionType -> Integer -> Integer -> Integer -> Integer
-      endValue cond start bound increment =
-        case cond of
-          LessThan     -> start +  bound    * increment
-          LessEqual    -> start + (bound-1) * increment
-          GreaterThan  -> start +  bound    * increment
-          GreaterEqual -> start + (bound-1) * increment
-          NotEqual     -> start +  bound    * increment
 
-      -- |Random type for casting the loop counter such that the cast has no effect on the loop bound
-      randomCastType :: CounterType -> Integer -> Integer -> Integer -> Gen CounterType
-      randomCastType ct s i e = oneof [return ct, randomCounterType `suchThat` valid]
-        where
-          valid ct' = (inRange ct' s) && (inRange ct' $ s+i) && (inRange ct' e)
+-- |Random loop bound, sized and also depending on the types of the loop and the loop counter variable
+randomLoopBound :: Int -> LoopType -> CounterType -> Gen Integer
+randomLoopBound n lt ct = choose (bMin, bMax)
+  where
+      bMin = if lt == Do then 1 else 0
+      bMax = min (fromIntegral n) ((rMax ct - rMin ct) `div` 4)
+
+
+-- |Random start value for loop counter
+randomStartValue :: Int -> CounterType -> Gen Integer
+randomStartValue n ct
+  | signed ct = frequency [(1, fromRange), (2, nearBegin), (2, nearEnd), (2, nearZero)]
+  | otherwise = frequency [(1, fromRange), (3, nearBegin), (3, nearEnd)]
+  where
+    -- value near beginning of representable range
+    nearBegin = choose (rMin ct, rMin ct + distance)
+    -- value near end of representable range
+    nearEnd   = choose (rMax ct - distance, rMax ct)
+    -- value from full representable range
+    fromRange = choose (rMin ct, rMax ct)
+    -- value near zero
+    nearZero  = choose (-distance, distance)
+    -- maximum allowed distance
+    distance  = min (fromIntegral n) ((rMax ct - rMin ct) `div` 2)
+
+
+-- |Random increment value for loop counter
+randomIncrement :: Int -> CounterType -> Gen Integer
+randomIncrement n ct = frequency [ (2, sizedIncrement)
+                                 , (2, negate <$> sizedIncrement)
+                                 , (1, rangeIncrement)
+                                 ]
+  where
+    -- value depending on complexity and representable range
+    sizedIncrement = choose (0, min (fromIntegral n) rmax)
+    -- value depending only on representable range
+    rangeIncrement = choose (- rmax, rmax)
+    -- maximum increment value depending on representable range
+    rmax = rMax ct `div` 8
+
+
+-- |Random abort condition for loop, depends on direction of increment
+randomCondition :: Integer -> Gen ConditionType
+randomCondition increment
+  | increment  < 0 = elements [GreaterThan, GreaterEqual, NotEqual]
+  | increment == 0 = elements [LessThan, GreaterThan]
+  | otherwise      = elements [LessThan, LessEqual, NotEqual]
+
+
+-- |Random type for casting the loop counter such that the cast has no effect on the loop bound
+randomCastType :: CounterType -> Integer -> Integer -> Integer -> Gen CounterType
+randomCastType ct s i e = oneof [return ct, randomCounterType `suchThat` valid]
+  where
+    valid ct' = (inRange ct' s) && (inRange ct' $ abs i) && (inRange ct' e)
+
+
+-- |End value of loop counter that leads to abort of loop
+loopCounterEndValue :: ConditionType -> Integer -> Integer -> Integer -> Integer
+loopCounterEndValue cond start bound increment =
+  case cond of
+    LessThan     -> start +  bound    * increment
+    LessEqual    -> start + (bound-1) * increment
+    GreaterThan  -> start +  bound    * increment
+    GreaterEqual -> start + (bound-1) * increment
+    NotEqual     -> start +  bound    * increment
 
 
 -- |Generator for a list of loop specifications. The list has a fixed length `len' and each loop is sized up to `complexity'
