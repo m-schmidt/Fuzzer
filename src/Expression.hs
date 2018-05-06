@@ -213,7 +213,7 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
           arithExpr2 = BinExpr
             <$> elements [Div, Mod]
             <*> (expr $ n `div` 2)
-            <*> suchThat (expr $ n `div` 2) ((/= Just 0) . eval)
+            <*> (expr $ n `div` 2) `suchThat` ((/= Just 0) . eval)
 
           shiftExpr = BinExpr
             <$> elements [Shl, Shr]
