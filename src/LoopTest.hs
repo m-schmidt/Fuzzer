@@ -108,10 +108,6 @@ testFunction n (Loop lt ct cond (Constant cts start) (Constant cti increment) (C
             <> updateCount
             <> string8 "    }\n"
 
-    -- loop bound annottion for loop body
-    loopAnnot b | b > 0      = string8 "        __builtin_ais_annot(\"loop %here bound:" <> integerDec b <> string8 ".." <> integerDec b <> string8 ";\");\n"
-                | otherwise  = string8 "        __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
-
     -- setup of loop counter
     setupCounter             = string8 "    i = " <> startValue <> string8 ";\n"
 
@@ -124,12 +120,16 @@ testFunction n (Loop lt ct cond (Constant cts start) (Constant cti increment) (C
     -- check of loop exit condition
     checkExit                = cast cte <> string8 "i" <> printCondition cond <> endValue
 
-    -- flow annotation for increment routine
+    -- loop bound annotation for loop body
+    loopAnnot b | b > 0      = string8 "        __builtin_ais_annot(\"loop %here bound:" <> integerDec b <> string8 ".." <> integerDec b <> string8 ";\");\n"
+                | otherwise  = string8 "        __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
+
+    -- call to separate increment routine
+    updateCount              = string8 "        count = test_incr" <> intDec n <> string8 "(count);\n"
+
+    -- flow annotation for separate increment routine
     flowAnnot b | b > 0      = string8 "    __builtin_ais_annot(\"flow sum: point(%here) == "<> integerDec b <> string8 " point('main');\");\n"
                 | otherwise  = string8 "    __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
-
-    -- call to increment routine
-    updateCount              = string8 "        count = test_incr" <> intDec n <> string8 "(count);\n"
 
     -- typecast (empty when target type equals loop counter type)
     cast t | t /= ct         = string8 "(" <> printCounterType t <> string8 ")"
