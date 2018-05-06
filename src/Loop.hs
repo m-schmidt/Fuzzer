@@ -45,8 +45,8 @@ data CounterType = CounterType
 -- |Smart constructor that handles the representable range according the bit width
 mkCounterType :: Bool -> Integer -> CounterType
 mkCounterType s n
- | s == True            = CounterType s n (- 2^(n-1))     (2^(n-1) - 1)
- | otherwise            = CounterType s n 0               (2^n - 1)
+ | s == True = CounterType s n (- 2^(n-1)) (2^(n-1) - 1)
+ | otherwise = CounterType s n 0           (2^n - 1)
 
 
 -- |Check whether a value is representable in a data type
