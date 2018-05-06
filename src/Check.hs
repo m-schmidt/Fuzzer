@@ -14,6 +14,7 @@ import Data.List
 import Data.Word
 import Error
 import ExpressionTest
+import LoopTest
 import System.Directory
 import System.Exit
 import System.IO
@@ -104,4 +105,11 @@ checkConventions opts =
 
 -- |Run random tests for loops
 checkLoopbounds :: Options -> IO ()
-checkLoopbounds _ = undefined
+checkLoopbounds opts =
+  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genLoops shrinkLoops $ loopboundCorrect $ runTestScript "./test1.sh"
+  where
+    genLoops :: Gen [Loop]
+    genLoops = genLoopList (optChunkSize opts) (optComplexity opts)
+
+    shrinkLoops :: [Loop] -> [[Loop]]
+    shrinkLoops = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
