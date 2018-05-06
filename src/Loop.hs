@@ -45,8 +45,9 @@ data CounterType = CounterType
 -- |Smart constructor that handles the representable range according the bit width
 mkCounterType :: Bool -> Integer -> CounterType
 mkCounterType s n
- | s == True = CounterType s n (- 2^(n-1)) (2^(n-1) - 1)
- | otherwise = CounterType s n 0           (2^n - 1)
+ | s == True && n == 64 = CounterType s n (- 2^(n-1) + 1) (2^(n-1) - 1) -- avoid signed minimum for 64bit types
+ | s == True            = CounterType s n (- 2^(n-1))     (2^(n-1) - 1)
+ | otherwise            = CounterType s n 0               (2^n - 1)
 
 
 -- |Check whether a value is representable in a data type
@@ -113,7 +114,9 @@ instance Arbitrary Loop where
         ct        <- randomCounterType
         bound     <- randomLoopBound n lt ct
         start     <- randomStartValue n ct
-        increment <- randomIncrement n ct `suchThat` \i -> bound == 0 || (i /= 0 && inRange ct (start + bound * i))
+        -- select an increment such that the end value computed later will also be valid
+        increment <- randomIncrement n ct `suchThat` \i -> (bound == 0 && inRange ct (start - i))
+                                                        || (bound /= 0 && i /= 0 && inRange ct (start + bound * i))
         cond      <- randomCondition increment
         let end = loopCounterEndValue cond start bound increment
         cts       <- randomCastType ct start increment end
