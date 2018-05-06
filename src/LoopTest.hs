@@ -109,36 +109,36 @@ testFunction fc n (Loop lt ct cond (Constant cts start) (Constant cti increment)
             <> string8 "    }\n"
 
     -- setup of loop counter
-    setupCounter             = string8 "    i = " <> startValue <> string8 ";\n"
+    setupCounter            = string8 "    i = " <> startValue <> string8 ";\n"
 
     -- increment of counter using positive immediates
-    loopIncStmt              = string8 "        " <> loopInc <> string8 ";\n"
+    loopIncStmt             = string8 "        " <> loopInc <> string8 ";\n"
 
-    loopInc | increment < 0  = string8 "i = " <> cast cti <> string8 "i - " <> printConstant ct (negate increment)
-            | otherwise      = string8 "i = " <> cast cti <> string8 "i + " <> printConstant ct increment
+    loopInc | increment < 0 = string8 "i = " <> cast cti <> string8 "i - " <> printConstant ct (negate increment)
+            | otherwise     = string8 "i = " <> cast cti <> string8 "i + " <> printConstant ct increment
 
     -- check of loop exit condition
-    checkExit                = cast cte <> string8 "i" <> printCondition cond <> endValue
+    checkExit               = cast cte <> string8 "i" <> printCondition cond <> endValue
 
     -- loop bound annotation for loop body
-    loopAnnot | bound > 0    = string8 "        __builtin_ais_annot(\"loop %here bound:" <> integerDec bound <> string8 ".." <> integerDec bound <> string8 ";\");\n"
-              | otherwise    = string8 "        __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
+    loopAnnot | bound > 0   = string8 "        __builtin_ais_annot(\"loop %here bound:" <> integerDec bound <> string8 ".." <> integerDec bound <> string8 ";\");\n"
+              | otherwise   = string8 "        __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
 
     -- call to separate increment routine
-    updateCount              = string8 "        count = test_incr" <> intDec n <> string8 "(count);\n"
+    updateCount             = string8 "        count = test_incr" <> intDec n <> string8 "(count);\n"
 
     -- flow annotation for separate increment routine
-    flowAnnot | fc == False  = mempty
-              | bound > 0    = string8 "    __builtin_ais_annot(\"flow sum: point(%here) == "<> integerDec bound <> string8 " point('main');\");\n"
-              | otherwise    = string8 "    __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
+    flowAnnot | fc == False = mempty
+              | bound > 0   = string8 "    __builtin_ais_annot(\"flow sum: point(%here) == "<> integerDec bound <> string8 " point('main');\");\n"
+              | otherwise   = string8 "    __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
 
     -- typecast (empty when target type equals loop counter type)
-    cast t | t /= ct         = string8 "(" <> printCounterType t <> string8 ")"
-           | otherwise       = string8 ""
+    cast t | t /= ct        = string8 "(" <> printCounterType t <> string8 ")"
+           | otherwise      = string8 ""
 
     -- casted immediate constants constant
-    startValue               = cast cts <> printConstant ct start
-    endValue                 = cast cte <> printConstant ct end
+    startValue              = cast cts <> printConstant ct start
+    endValue                = cast cte <> printConstant ct end
 
 
 -- |Like Data.List.intercalate but by monoidal concat of Builders.
