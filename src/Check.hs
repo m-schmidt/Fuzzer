@@ -103,10 +103,15 @@ checkConventions opts =
     shrinkSigs = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
 
 
+-- |Loopbounds are correct
+loopboundCorrect :: Bool -> [Loop] -> Property
+loopboundCorrect fc = simpleLoopboundCorrect fc $ runTestScript "./test1.sh"
+
+
 -- |Run random tests for loops
 checkLoopbounds :: Options -> IO ()
 checkLoopbounds opts =
-  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genLoops shrinkLoops $ loopboundCorrect $ runTestScript "./test1.sh"
+  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genLoops shrinkLoops $ loopboundCorrect (optFlowConstraints opts)
   where
     genLoops :: Gen [Loop]
     genLoops = genLoopList (optChunkSize opts) (optComplexity opts)

@@ -35,27 +35,29 @@ data DataType
 
 -- |Command line options
 data Options = Options
-  { optMode         :: TestMode   -- ^ Mode for testing
-  , optExprType     :: DataType   -- ^ Base data type for expression testing
-  , optNumTests     :: Int        -- ^ Maximum number of test groups
-  , optChunkSize    :: Int        -- ^ Size of a test group
-  , optComplexity   :: Int        -- ^ Maximum complexity of test in a group
-  , optShowHelp     :: Bool       -- ^ Show help and terminate program
-  , optEnableShrink :: Bool       -- ^ Try to shrink on failing tests
-  , optPointer64    :: Bool       -- ^ Assume 64bit instead of 32bit wide pointers
+  { optMode            :: TestMode   -- ^ Mode for testing
+  , optExprType        :: DataType   -- ^ Base data type for expression testing
+  , optNumTests        :: Int        -- ^ Maximum number of test groups
+  , optChunkSize       :: Int        -- ^ Size of a test group
+  , optComplexity      :: Int        -- ^ Maximum complexity of test in a group
+  , optShowHelp        :: Bool       -- ^ Show help and terminate program
+  , optEnableShrink    :: Bool       -- ^ Try to shrink on failing tests
+  , optPointer64       :: Bool       -- ^ Assume 64bit instead of 32bit wide pointers
+  , optFlowConstraints :: Bool       -- ^ Flow constraints in loop tests
   } deriving (Eq,Show)
 
 -- |Default values for command line options
 defaultOptions :: Options
 defaultOptions = Options
-  { optMode         = EXPR
-  , optExprType     = UINT64
-  , optNumTests     = 100
-  , optChunkSize    = 1
-  , optComplexity   = 30
-  , optShowHelp     = False
-  , optEnableShrink = True
-  , optPointer64    = False
+  { optMode            = EXPR
+  , optExprType        = UINT64
+  , optNumTests        = 100
+  , optChunkSize       = 1
+  , optComplexity      = 30
+  , optShowHelp        = False
+  , optEnableShrink    = True
+  , optPointer64       = False
+  , optFlowConstraints = False
   }
 
 
@@ -90,6 +92,10 @@ options =
       ["ptr64"]
       (NoArg (\opts -> Right opts { optPointer64 = True }))
       "Assume 64-bit pointers for mode `conv'. Defaults to 32-bit pointers."
+  , Option []
+      ["flow"]
+      (NoArg (\opts -> Right opts { optFlowConstraints = True }))
+      "Generate flow constraints for mode `loop'."
   , Option []
       ["noshrink"]
       (NoArg (\opts -> Right opts { optEnableShrink = False }))

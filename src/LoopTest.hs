@@ -2,7 +2,7 @@
 
 module LoopTest
   ( module Loop
-  , loopboundCorrect
+  , simpleLoopboundCorrect
   ) where
 
 import Data.ByteString.Builder
@@ -16,21 +16,21 @@ import Test.QuickCheck.Monadic
 
 
 -- |Proposition that loops have correct bounds
-loopboundCorrect :: ([L.ByteString] -> IO Bool) -> [Loop] -> Property
-loopboundCorrect runScript loops = monadicIO $ do
-  result <- run $ runScript [toLazyByteString $ testProgram loops]
+simpleLoopboundCorrect :: Bool -> ([L.ByteString] -> IO Bool) -> [Loop] -> Property
+simpleLoopboundCorrect fc runScript loops = monadicIO $ do
+  result <- run $ runScript [toLazyByteString $ testProgram fc loops]
   assert (result == True)
 
 
 -- |Build program-part containing all test functions
-testProgram :: [Loop] -> Builder
-testProgram loops = testProgramPrefix
-                 <> newlineSeparated functions
-                 <> mainPrefix
-                 <> newlineSeparated functionCalls
-                 <> mainSuffix
+testProgram :: Bool -> [Loop] -> Builder
+testProgram fc loops = testProgramPrefix
+                    <> newlineSeparated functions
+                    <> mainPrefix
+                    <> newlineSeparated functionCalls
+                    <> mainSuffix
   where
-    functions        = mapi testFunction loops
+    functions        = mapi (testFunction fc) loops
     functionCalls    = mapi functionCall loops
     functionCall n _ = string8 "    if (test" <> intDec n <> string8 "() != 0) exit_evil(" <> intDec n <> string8 ");"
 
@@ -71,13 +71,13 @@ mainSuffix = string8 [str|
 
 
 -- |Generate the code for a test function 'n' with a given signature
-testFunction :: Int -> Loop -> Builder
-testFunction n (Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) bound)
-  =  incrRoutine <> textRoutine
+testFunction :: Bool -> Int -> Loop -> Builder
+testFunction fc n (Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) bound)
+  = incrRoutine <> textRoutine
   where
     -- routine to increment a separate iteration counter
     incrRoutine = string8 "int __attribute__ ((noinline)) test_incr" <> intDec n <> string8 "(int x)\n{\n"
-               <> flowAnnot bound
+               <> flowAnnot
                <> string8 "    return x+1;\n}\n\n"
 
     -- routine containing the test loop
@@ -92,19 +92,19 @@ testFunction n (Loop lt ct cond (Constant cts start) (Constant cti increment) (C
       Do    -> setupCounter
             <> string8 "    do\n    {\n"
             <> incCounterStamement
-            <> loopAnnot bound
+            <> loopAnnot
             <> updateCount
             <> string8 "    }\n    while (" <> checkExit <> string8 ");\n"
 
       For   -> string8 "    for (i = " <> startValue <> string8 "; " <> checkExit <> string8 "; " <> incCounter increment <> string8 ")\n    {\n"
-            <> loopAnnot bound
+            <> loopAnnot
             <> updateCount
             <> string8 "    }\n"
 
       While -> setupCounter
             <> string8 "    while (" <> checkExit <> string8 ")\n    {\n"
             <> incCounterStamement
-            <> loopAnnot bound
+            <> loopAnnot
             <> updateCount
             <> string8 "    }\n"
 
@@ -121,15 +121,16 @@ testFunction n (Loop lt ct cond (Constant cts start) (Constant cti increment) (C
     checkExit                = cast cte <> string8 "i" <> printCondition cond <> endValue
 
     -- loop bound annotation for loop body
-    loopAnnot b | b > 0      = string8 "        __builtin_ais_annot(\"loop %here bound:" <> integerDec b <> string8 ".." <> integerDec b <> string8 ";\");\n"
-                | otherwise  = string8 "        __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
+    loopAnnot | bound > 0    = string8 "        __builtin_ais_annot(\"loop %here bound:" <> integerDec bound <> string8 ".." <> integerDec bound <> string8 ";\");\n"
+              | otherwise    = string8 "        __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
 
     -- call to separate increment routine
     updateCount              = string8 "        count = test_incr" <> intDec n <> string8 "(count);\n"
 
     -- flow annotation for separate increment routine
-    flowAnnot b | b > 0      = string8 "    __builtin_ais_annot(\"flow sum: point(%here) == "<> integerDec b <> string8 " point('main');\");\n"
-                | otherwise  = string8 "    __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
+    flowAnnot | fc == False  = mempty
+              | bound > 0    = string8 "    __builtin_ais_annot(\"flow sum: point(%here) == "<> integerDec bound <> string8 " point('main');\");\n"
+              | otherwise    = string8 "    __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
 
     -- typecast (empty when target type equals loop counter type)
     cast t | t /= ct         = string8 "(" <> printCounterType t <> string8 ")"
