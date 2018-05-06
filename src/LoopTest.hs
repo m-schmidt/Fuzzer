@@ -91,17 +91,17 @@ testFunction n (Loop lt ct cond (Constant cts start) (Constant cti increment) (C
     testBody = case lt of
       Do    -> setupCounter
             <> string8 "    do\n    {\n"
-            <> incCounter increment
+            <> incCounterStamement
             <> loopAnnot bound
             <> updateCount
             <> string8 "    }\n    while (" <> checkExit <> string8 ");\n"
-      For   -> string8 "    for (i = " <> printConstant ct start <> string8 "; " <> checkExit <> string8 "; i += " <> printConstant ct increment <> string8 ")\n    {\n"
+      For   -> string8 "    for (i = " <> startValue <> string8 "; " <> checkExit <> string8 "; " <> incCounter increment <> string8 ")\n    {\n"
             <> loopAnnot bound
             <> updateCount
             <> string8 "    }\n"
       While -> setupCounter
             <> string8 "    while (" <> checkExit <> string8 ")\n    {\n"
-            <> incCounter increment
+            <> incCounterStamement
             <> loopAnnot bound
             <> updateCount
             <> string8 "    }\n"
@@ -111,14 +111,16 @@ testFunction n (Loop lt ct cond (Constant cts start) (Constant cti increment) (C
                 | otherwise  = string8 "        __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
 
     -- setup of loop counter
-    setupCounter             = string8 "    i = " <> cast cts <> printConstant cts start <> string8 ";\n"
+    setupCounter             = string8 "    i = " <> startValue <> string8 ";\n"
 
     -- increment of counter using positive immediates
-    incCounter i | i < 0     = string8 "        i = " <> cast cti <> string8 "i - " <> printConstant cti (negate i) <> string8 ";\n"
-                 | otherwise = string8 "        i = " <> cast cti <> string8 "i + " <> printConstant cti i <> string8 ";\n"
+    incCounterStamement      = string8 "        " <> incCounter increment <> string8 ";\n"
+
+    incCounter i | i < 0     = string8 "i = " <> cast cti <> string8 "i - " <> printConstant ct (negate i)
+                 | otherwise = string8 "i = " <> cast cti <> string8 "i + " <> printConstant ct i
 
     -- check of loop exit condition
-    checkExit                = cast cte <> string8 "i" <> printCondition cond <> cast cte <> printConstant cte end
+    checkExit                = cast cte <> string8 "i" <> printCondition cond <> endValue
 
     -- flow annotation for increment routine
     flowAnnot b | b > 0      = string8 "    __builtin_ais_annot(\"flow sum: point(%here) == "<> integerDec b <> string8 " point('main');\");\n"
@@ -127,9 +129,13 @@ testFunction n (Loop lt ct cond (Constant cts start) (Constant cti increment) (C
     -- call to increment routine
     updateCount              = string8 "        count = test_incr" <> intDec n <> string8 "(count);\n"
 
-    -- typecast when target type is different
+    -- typecast (empty when target type equals loop counter type)
     cast t | t /= ct         = string8 "(" <> printCounterType t <> string8 ")"
            | otherwise       = string8 ""
+
+    -- casted immediate constants constant
+    startValue               = cast cts <> printConstant ct start
+    endValue                 = cast cte <> printConstant ct end
 
 
 -- |Like Data.List.intercalate but by monoidal concat of Builders.
