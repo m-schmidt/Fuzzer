@@ -70,7 +70,7 @@ mainSuffix = string8 [str|
 |]
 
 
--- |Generate the code for a test function 'n' with a given signature
+-- |Generate the code for a test function 'n' with a given loop specification
 testFunction :: Bool -> Int -> Loop -> Builder
 testFunction fc n (Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) bound)
   = incrRoutine <> textRoutine
@@ -91,19 +91,19 @@ testFunction fc n (Loop lt ct cond (Constant cts start) (Constant cti increment)
     testBody = case lt of
       Do    -> setupCounter
             <> string8 "    do\n    {\n"
-            <> incCounterStamement
+            <> loopIncStmt
             <> loopAnnot
             <> updateCount
             <> string8 "    }\n    while (" <> checkExit <> string8 ");\n"
 
-      For   -> string8 "    for (i = " <> startValue <> string8 "; " <> checkExit <> string8 "; " <> incCounter increment <> string8 ")\n    {\n"
+      For   -> string8 "    for (i = " <> startValue <> string8 "; " <> checkExit <> string8 "; " <> loopInc <> string8 ")\n    {\n"
             <> loopAnnot
             <> updateCount
             <> string8 "    }\n"
 
       While -> setupCounter
             <> string8 "    while (" <> checkExit <> string8 ")\n    {\n"
-            <> incCounterStamement
+            <> loopIncStmt
             <> loopAnnot
             <> updateCount
             <> string8 "    }\n"
@@ -112,10 +112,10 @@ testFunction fc n (Loop lt ct cond (Constant cts start) (Constant cti increment)
     setupCounter             = string8 "    i = " <> startValue <> string8 ";\n"
 
     -- increment of counter using positive immediates
-    incCounterStamement      = string8 "        " <> incCounter increment <> string8 ";\n"
+    loopIncStmt              = string8 "        " <> loopInc <> string8 ";\n"
 
-    incCounter i | i < 0     = string8 "i = " <> cast cti <> string8 "i - " <> printConstant ct (negate i)
-                 | otherwise = string8 "i = " <> cast cti <> string8 "i + " <> printConstant ct i
+    loopInc | increment < 0  = string8 "i = " <> cast cti <> string8 "i - " <> printConstant ct (negate increment)
+            | otherwise      = string8 "i = " <> cast cti <> string8 "i + " <> printConstant ct increment
 
     -- check of loop exit condition
     checkExit                = cast cte <> string8 "i" <> printCondition cond <> endValue
