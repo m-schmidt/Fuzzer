@@ -212,7 +212,7 @@ randomCondition increment
 randomCastType :: CounterType -> Integer -> Integer -> Integer -> Gen CounterType
 randomCastType ct s i e = oneof [return ct, randomCounterType `suchThat` valid]
   where
-    valid ct' = (inRange ct' s) && (inRange ct' $ abs i) && (inRange ct' e)
+    valid ct' = (inRange ct' s) && (inRange ct' $ abs i) && (inRange ct' e) && (inRange ct' $ e+i)
 
 
 -- |End value of loop counter that leads to abort of loop
