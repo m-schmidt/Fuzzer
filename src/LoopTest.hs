@@ -121,7 +121,7 @@ testFunction fc n (Loop lt ct cond (Constant cts start) (Constant cti increment)
     checkExit               = cast cte <> string8 "i" <> printCondition cond <> endValue
 
     -- loop bound annotation for loop body
-    loopAnnot | bound > 0   = string8 "        __builtin_ais_annot(\"loop %here bound:" <> integerDec bound <> string8 ".." <> integerDec bound <> string8 ";\");\n"
+    loopAnnot | bound > 0   = string8 "        __builtin_ais_annot(\"loop %here bound: " <> integerDec bound <> string8 ".." <> integerDec bound <> string8 ";\");\n"
               | otherwise   = string8 "        __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
 
     -- call to separate increment routine
