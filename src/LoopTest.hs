@@ -76,7 +76,7 @@ testFunction fc n (Loop lt ct cond (Constant cts start) (Constant cti increment)
   = incrRoutine <> textRoutine
   where
     -- routine to increment a separate iteration counter
-    incrRoutine = string8 "int __attribute__ ((noinline)) test_incr" <> intDec n <> string8 "(int x)\n{\n"
+    incrRoutine = string8 "static int __attribute__ ((noinline)) test_incr" <> intDec n <> string8 "(int x)\n{\n"
                <> flowAnnot
                <> string8 "    return x+1;\n}\n\n"
 
