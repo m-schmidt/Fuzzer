@@ -64,6 +64,13 @@ data ConditionType
   deriving (Eq, Enum, Bounded, Ord, Show)
 
 
+-- |A comparison operator can be inclusive or exclusive, i.e. comparison with the exact end value continues to loop or exits the loop
+data AbortBehaviour
+  = Inclusive
+  | Exclusive
+  deriving (Eq, Enum, Bounded, Ord, Show)
+
+
 -- |Specification of an immediate constant
 data Constant = Constant CounterType Integer
   deriving (Eq, Show)
@@ -109,24 +116,54 @@ printConstant t v = integerVal <> signSuffix <> widthSuffix
 instance Arbitrary Loop where
   arbitrary = frequency [ (9, sized validLoop), (1, sized overflowLoop) ]
     where
-      -- normal valid loops
+      -- generator for valid loops
       validLoop :: Int -> Gen Loop
       validLoop n = do
-        lt        <- randomLoopType
-        ct        <- randomCounterType
-        bound     <- randomLoopBound n lt ct
-        start     <- randomStartValue n ct
-        -- select an increment such that the end value computed later will also be valid
-        increment <- randomIncrement n ct `suchThat` \i -> (bound == 0 && inRange ct (start - i))
-                                                        || (bound /= 0 && i /= 0 && inRange ct (start + bound * i))
-        cond      <- randomCondition increment
-        let end = loopCounterEndValue cond start bound increment
-        cts       <- randomCastType ct start increment end
-        cti       <- randomCastType ct start increment end
-        cte       <- randomCastType ct start increment end
+        lt    <- randomLoopType
+        ct    <- randomCounterType
+        bound <- randomLoopBound n ct `suchThat` \b -> b /= 0 || lt /= Do
+        generateLoop n lt ct bound
+
+      -- generator for loops with at least one iteration
+      generateLoop :: Int -> LoopType -> CounterType -> Integer -> Gen Loop
+      generateLoop _ Do  _ 0 = undefined
+
+      generateLoop n lt ct 0 = do
+        -- arbitrary start value for loop counter
+        start <- randomStartValue n ct
+        end   <- randomStartValue n ct
+        -- arbitrary increment
+        increment <- randomIncrement n ct
+        -- arbitrary condition that fails
+        cond <- randomFailingCondition start end
+        cts  <- randomCastType ct start increment end
+        cti  <- randomCastType ct start increment end
+        cte  <- randomCastType ct start increment end
+        return $ Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) 0
+
+      generateLoop n lt ct bound = do
+        -- arbitrary start value for loop counter
+        start <- randomStartValue n ct
+        -- choose whether exactly the hitting the comparison value of the exit condition aborts the loop or leads to a final iteration
+        inclusive <- elements [False, True]
+        -- random increment value with constraints...
+        increment <- randomIncrement n ct `suchThat` \i ->
+                        -- ...it may be zero, but only if the loop bound is 1 and the exit condition is exclusive
+                        (i == 0 && bound == 1 && not inclusive) ||
+                        -- ...otherwise it must be non-zero and the final loop counter value must remain representable
+                        (i /= 0 && inRange ct (start + bound * i))
+        -- the condition depends on the loop mode and the direction of the loop counter
+        cond <- randomCondition inclusive increment
+        -- end value for check in loop exit condition
+        let end = start + increment * (bound - if inclusive then 1 else 0)
+        -- the final loop counter value must be used to compute optional type casts
+        let final = start + bound * increment
+        cts  <- randomCastType ct start increment final
+        cti  <- randomCastType ct start increment final
+        cte  <- randomCastType ct start increment final
         return $ Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) bound
 
-      -- loop with bound 1 that wrap around on unsigned loop counter types
+      -- loop with bound 1 that wraps around the range of unsigned loop counter types
       overflowLoop :: Int -> Gen Loop
       overflowLoop n = do
         lt        <- randomLoopType
@@ -159,12 +196,12 @@ randomBitWidth :: Gen Integer
 randomBitWidth = elements [8, 16, 32, 64]
 
 
--- |Random loop bound, sized and also depending on the types of the loop and the loop counter variable
-randomLoopBound :: Int -> LoopType -> CounterType -> Gen Integer
-randomLoopBound n lt ct = choose (bMin, bMax)
+-- |Random loop bound but sized and depending on the type of the loop counter variable
+randomLoopBound :: Int -> CounterType -> Gen Integer
+randomLoopBound n ct = choose (0, bMax)
   where
-      bMin = if lt == Do then 1 else 0
-      bMax = min (fromIntegral n) ((rMax ct - rMin ct) `div` 4)
+    bMax  = min (fromIntegral n) (range `div` 4)
+    range = rMax ct - rMin ct
 
 
 -- |Random start value for loop counter
@@ -200,30 +237,33 @@ randomIncrement n ct = frequency [ (2, sizedIncrement)
     rmax = rMax ct `div` 8
 
 
--- |Random abort condition for loop depending on direction of increment
-randomCondition :: Integer -> Gen ConditionType
-randomCondition increment
-  | increment  < 0 = elements [GreaterThan, GreaterEqual, NotEqual]
-  | increment == 0 = elements [LessThan, GreaterThan]
-  | otherwise      = elements [LessThan, LessEqual, NotEqual]
+-- |Random abort condition for loop depending on mode on exit check and direction of increment
+randomCondition :: Bool -> Integer -> Gen ConditionType
+randomCondition inclusive increment = if inclusive then inclusiveConsition else exclusiveConsition
+  where
+    inclusiveConsition
+      | increment < 0 = return GreaterEqual
+      | increment > 0 = return LessEqual
+      | otherwise     = undefined
+    exclusiveConsition
+      | increment < 0 = elements [GreaterThan, NotEqual]
+      | increment > 0 = elements [LessThan, NotEqual]
+      | otherwise     = elements [LessThan, GreaterThan, NotEqual]
+
+
+-- |Random abort condition that fails for two given comparison values
+randomFailingCondition :: Integer -> Integer ->  Gen ConditionType
+randomFailingCondition a b
+    | a < b     = elements [GreaterThan, GreaterEqual]
+    | a > b     = elements [LessThan, LessEqual]
+    | otherwise = return NotEqual
 
 
 -- |Random type for casting the loop counter such that the cast has no effect on the loop bound
 randomCastType :: CounterType -> Integer -> Integer -> Integer -> Gen CounterType
 randomCastType ct s i e = oneof [return ct, randomCounterType `suchThat` valid]
   where
-    valid ct' = (inRange ct' s) && (inRange ct' $ abs i) && (inRange ct' e) && (inRange ct' $ e+i)
-
-
--- |End value of loop counter that leads to abort of loop
-loopCounterEndValue :: ConditionType -> Integer -> Integer -> Integer -> Integer
-loopCounterEndValue cond start bound increment =
-  case cond of
-    LessThan     -> start +  bound    * increment
-    LessEqual    -> start + (bound-1) * increment
-    GreaterThan  -> start +  bound    * increment
-    GreaterEqual -> start + (bound-1) * increment
-    NotEqual     -> start +  bound    * increment
+    valid ct' = (inRange ct' s) && (inRange ct' $ abs i) && (inRange ct' e)
 
 
 -- |Generator for a list of loop specifications. The list has a fixed length `len' and each loop is sized up to `complexity'
