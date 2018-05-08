@@ -206,7 +206,7 @@ randomLoopBound n ct = choose (0, bMax)
     range = rMax ct - rMin ct
 
 
--- |Random start value for loop counter
+-- |Random value for a loop counter
 randomCounterValue :: Int -> CounterType -> Gen Integer
 randomCounterValue n ct
   | signed ct = frequency [(1, fromRange), (2, nearBegin), (2, nearEnd), (2, nearZero)]
