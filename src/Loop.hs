@@ -129,9 +129,9 @@ instance Arbitrary Loop where
       generateLoop _ Do  _ 0 = undefined
 
       generateLoop n lt ct 0 = do
-        -- arbitrary start value for loop counter
-        start <- randomStartValue n ct
-        end   <- randomStartValue n ct
+        -- arbitrary start and end values for loop counter
+        start <- randomCounterValue n ct
+        end   <- randomCounterValue n ct
         -- arbitrary increment
         increment <- randomIncrement n ct
         -- arbitrary condition that fails
@@ -143,7 +143,7 @@ instance Arbitrary Loop where
 
       generateLoop n lt ct bound = do
         -- arbitrary start value for loop counter
-        start <- randomStartValue n ct
+        start <- randomCounterValue n ct
         -- choose whether exactly the hitting the comparison value of the exit condition aborts the loop or leads to a final iteration
         inclusive <- elements [False, True]
         -- random increment value with constraints...
@@ -172,7 +172,7 @@ instance Arbitrary Loop where
         ct        <- mkCounterType False <$> randomBitWidth
         let modulus = 2^(bitwidth ct)
         let bound = 1
-        start     <- randomStartValue n ct
+        start     <- randomCounterValue n ct
         delta     <- randomIncrement n ct `suchThat` \i -> (i /= 0 && inRange ct (start + i))
         let end = start + delta
         let increment = delta - modulus * signum delta
@@ -207,8 +207,8 @@ randomLoopBound n ct = choose (0, bMax)
 
 
 -- |Random start value for loop counter
-randomStartValue :: Int -> CounterType -> Gen Integer
-randomStartValue n ct
+randomCounterValue :: Int -> CounterType -> Gen Integer
+randomCounterValue n ct
   | signed ct = frequency [(1, fromRange), (2, nearBegin), (2, nearEnd), (2, nearZero)]
   | otherwise = frequency [(1, fromRange), (3, nearBegin), (3, nearEnd)]
   where
