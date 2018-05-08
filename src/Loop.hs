@@ -148,20 +148,22 @@ instance Arbitrary Loop where
         inclusive <- elements [False, True]
         -- random increment value with constraints...
         increment <- randomIncrement n ct `suchThat` \i ->
-                        -- ...it may be zero, but only if the loop bound is 1 and the exit condition is exclusive
-                        (i == 0 && bound == 1 && not inclusive) ||
+                        -- ...it may be zero, but only for a do-loop with bound 1 and exclusive exit condition
+                        (i == 0 && lt == Do && bound == 1 && not inclusive) ||
                         -- ...otherwise it must be non-zero and the final loop counter value must remain representable
                         (i /= 0 && inRange ct (start + bound * i))
         -- the condition depends on the loop mode and the direction of the loop counter
         cond <- randomCondition inclusive increment
         -- end value for check in loop exit condition
         let end = start + increment * (bound - if inclusive then 1 else 0)
+        -- delta for end value w/o effect on loop bound
+        delta <- randomDisturbance cond inclusive increment
         -- the final loop counter value must be used to compute optional type casts
         let final = start + bound * increment
         cts  <- randomCastType ct start increment final
         cti  <- randomCastType ct start increment final
         cte  <- randomCastType ct start increment final
-        return $ Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) bound
+        return $ Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte $ end + delta) bound
 
       -- loop with bound 1 that wraps around the range of unsigned loop counter types
       overflowLoop :: Int -> Gen Loop
@@ -235,6 +237,23 @@ randomIncrement n ct = frequency [ (2, sizedIncrement)
     rangeIncrement = choose (- rmax, rmax)
     -- maximum increment value depending on representable range
     rmax = rMax ct `div` 8
+
+
+-- |Random disturbance of the end value that has no effect on the loop bound
+randomDisturbance :: ConditionType -> Bool -> Integer -> Gen Integer
+randomDisturbance NotEqual _ _ =
+  return 0
+randomDisturbance _ inclusive increment =
+  if inclusive then inclusiveDisplacement else exclusiveDisplacement
+  where
+    inclusiveDisplacement
+      | increment < 0 = choose (increment+1, 0)
+      | increment > 0 = choose (0, increment-1)
+      | otherwise     = return 0
+    exclusiveDisplacement
+      | increment < 0 = choose (0, -increment-1)
+      | increment > 0 = choose (-increment+1, 0)
+      | otherwise     = return 0
 
 
 -- |Random abort condition for loop depending on mode on exit check and direction of increment
