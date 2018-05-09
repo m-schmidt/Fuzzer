@@ -122,15 +122,15 @@ testFunction fc n (Loop lt ct cond (Constant cts start) (Constant cti increment)
 
     -- loop bound annotation for loop body
     loopAnnot | bound > 0   = string8 "        __builtin_ais_annot(\"loop %here bound: " <> integerDec bound <> string8 ".." <> integerDec bound <> string8 ";\");\n"
-              | otherwise   = string8 "        __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
+              | otherwise   = string8 "        __builtin_ais_annot(\"try instruction %here assert reachable: false;\");\n"
 
     -- call to separate increment routine
     updateCount             = string8 "        count = test_incr" <> intDec n <> string8 "(count);\n"
 
     -- flow annotation for separate increment routine
     flowAnnot | fc == False = mempty
-              | bound > 0   = string8 "    __builtin_ais_annot(\"flow sum: point(%here) == "<> integerDec bound <> string8 " point('main');\");\n"
-              | otherwise   = string8 "    __builtin_ais_annot(\"instruction %here assert reachable: false;\");\n"
+              | bound > 0   = string8 "    __builtin_ais_annot(\"try flow sum: point(%here) == "<> integerDec bound <> string8 " point('main');\");\n"
+              | otherwise   = string8 "    __builtin_ais_annot(\"try instruction %here assert reachable: false;\");\n"
 
     -- typecast (empty when target type equals loop counter type)
     cast t | t /= ct        = string8 "(" <> printCounterType t <> string8 ")"
