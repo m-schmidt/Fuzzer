@@ -103,7 +103,7 @@ printCondition c = case c of
 printConstant :: CounterType -> Integer -> Builder
 printConstant t v = integerVal <> signSuffix <> widthSuffix
   where
-    integerVal | v == -9223372036854775808 = string8 "0x8000000000000000"
+    integerVal | v == -9223372036854775808 = string8 "(signed long long)0x8000000000000000"
                | otherwise                 = integerDec v
     signSuffix  = string8 $ if signed t then "" else "u"
     widthSuffix = string8 $ case bitwidth t of
