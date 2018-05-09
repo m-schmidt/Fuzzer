@@ -244,13 +244,13 @@ randomDisturbance :: ConditionType -> Bool -> Integer -> Gen Integer
 randomDisturbance NotEqual _ _ =
   return 0
 randomDisturbance _ inclusive increment =
-  if inclusive then inclusiveDisplacement else exclusiveDisplacement
+  if inclusive then inclusiveDisturbance else exclusiveDisturbance
   where
-    inclusiveDisplacement
+    inclusiveDisturbance
       | increment < 0 = choose (increment+1, 0)
       | increment > 0 = choose (0, increment-1)
       | otherwise     = return 0
-    exclusiveDisplacement
+    exclusiveDisturbance
       | increment < 0 = choose (0, -increment-1)
       | increment > 0 = choose (-increment+1, 0)
       | otherwise     = return 0
