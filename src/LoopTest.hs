@@ -49,7 +49,10 @@ void exit_ok(void)
 
 void exit_evil(int status)
 {
-#   ifndef MASK_EXIT
+#   ifdef PRINT_STATUS
+    printf("Test %d failed.\n", status);
+#   endif
+#   ifndef DONT_MASK_STATUS
     if (status & 0xff == EXIT_SUCCESS) {
         status = EXIT_FAILURE;
     }

@@ -135,15 +135,15 @@ instance Arbitrary Loop where
         -- arbitrary increment
         increment <- randomIncrement n ct
         -- arbitrary condition that fails
-        cond <- randomFailingCondition start end
-        cts  <- randomCastType ct start increment end
-        cti  <- randomCastType ct start increment end
-        cte  <- randomCastType ct start increment end
+        cond  <- randomFailingCondition start end
+        cts   <- randomCastType ct start increment end
+        cti   <- randomCastType ct start increment end
+        cte   <- randomCastType ct start increment end
         return $ Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) 0
 
       generateLoop n lt ct bound = do
         -- arbitrary start value for loop counter
-        start <- randomCounterValue n ct
+        start     <- randomCounterValue n ct
         -- choose whether exactly the hitting the comparison value of the exit condition aborts the loop or leads to a final iteration
         inclusive <- elements [False, True]
         -- random increment value with constraints...
@@ -153,31 +153,31 @@ instance Arbitrary Loop where
                         -- ...otherwise it must be non-zero and the final loop counter value must remain representable
                         (i /= 0 && inRange ct (start + bound * i))
         -- the condition depends on the loop mode and the direction of the loop counter
-        cond <- randomCondition inclusive increment
+        cond      <- randomCondition inclusive increment
         -- end value for check in loop exit condition
         let end = start + increment * (bound - if inclusive then 1 else 0)
         -- delta for end value w/o effect on loop bound
-        delta <- randomDisturbance cond inclusive increment
+        delta     <- randomDisturbance cond inclusive increment
         -- the final loop counter value must be used to compute optional type casts
         let final = start + bound * increment
-        cts  <- randomCastType ct start increment final
-        cti  <- randomCastType ct start increment final
-        cte  <- randomCastType ct start increment final
+        cts       <- randomCastType ct start increment final
+        cti       <- randomCastType ct start increment final
+        cte       <- randomCastType ct start increment final
         return $ Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte $ end + delta) bound
 
       -- loop with bound 1 that wraps around the range of unsigned loop counter types
       overflowLoop :: Int -> Gen Loop
       overflowLoop n = do
-        lt        <- randomLoopType
-        ct        <- mkCounterType False <$> randomBitWidth
+        lt    <- randomLoopType
+        ct    <- mkCounterType False <$> randomBitWidth
         let modulus = 2^(bitwidth ct)
         let bound = 1
-        start     <- randomCounterValue n ct
-        delta     <- randomIncrement n ct `suchThat` \i -> (i /= 0 && inRange ct (start + i))
+        start <- randomCounterValue n ct
+        delta <- randomIncrement n ct `suchThat` \i -> (i /= 0 && inRange ct (start + i))
         let end = start + delta
         let increment = delta - modulus * signum delta
-        cts       <- randomCastType ct start increment end
-        cte       <- randomCastType ct start increment end
+        cts   <- randomCastType ct start increment end
+        cte   <- randomCastType ct start increment end
         return $ Loop lt ct NotEqual (Constant cts start) (Constant ct increment) (Constant cte end) bound
 
 
