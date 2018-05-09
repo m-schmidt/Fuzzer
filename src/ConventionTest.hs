@@ -124,6 +124,12 @@ void exit_ok(void)
 
 void exit_evil(int status)
 {
+#   ifndef MASK_EXIT
+    if (status & 0xff == EXIT_SUCCESS) {
+        status = EXIT_FAILURE;
+    }
+#   endif
+
     exit(status);
 }
 
