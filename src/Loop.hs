@@ -14,14 +14,16 @@ import Data.Monoid
 
 
 -- |Specification for a loop
-data Loop = Loop LoopType         -- ^ Type of loop
-                 CounterType      -- ^ Type of loop counter variable
-                 ConditionType    -- ^ Exit condition
-                 Constant         -- ^ Start value for loop counter
-                 Constant         -- ^ Increment value for loop counter
-                 Constant         -- ^ Comparison value for exit condition
-                 Integer          -- ^ Number of iterations of the loop body
-                 deriving (Eq, Show)
+data Loop = Loop
+  { loopType      :: LoopType        -- ^ Type of loop
+  , counterType   :: CounterType     -- ^ Type of loop counter variable
+  , condType      :: ConditionType   -- ^ Exit condition
+  , loopStart     :: Constant        -- ^ Start value for loop counter
+  , loopIncrement :: Constant        -- ^ Increment value for loop counter
+  , loopEnd       :: Constant        -- ^ Comparison value for exit condition
+  , loopBound     :: Integer         -- ^ Number of iterations of the loop body
+  }
+  deriving (Eq, Show)
 
 
 -- |Types of loops
@@ -72,7 +74,10 @@ data AbortBehaviour
 
 
 -- |Specification of an immediate constant
-data Constant = Constant CounterType Integer
+data Constant = Constant
+  { cType :: CounterType
+  , cVal  :: Integer
+  }
   deriving (Eq, Show)
 
 
