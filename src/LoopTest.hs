@@ -2,9 +2,10 @@
 
 module LoopTest
   ( module Loop
-  , simpleLoopboundCorrect
+  , loopboundCorrect
   ) where
 
+import Commandline
 import Data.ByteString.Builder
 import Data.List (intersperse)
 import Data.Monoid
@@ -16,9 +17,9 @@ import Test.QuickCheck.Monadic
 
 
 -- |Proposition that loops have correct bounds
-simpleLoopboundCorrect :: Bool -> ([L.ByteString] -> IO Bool) -> [Loop] -> Property
-simpleLoopboundCorrect fc runScript loops = monadicIO $ do
-  result <- run $ runScript [toLazyByteString $ testProgram fc loops]
+loopboundCorrect :: Options -> ([L.ByteString] -> IO Bool) -> [Loop] -> Property
+loopboundCorrect opts runScript loops = monadicIO $ do
+  result <- run $ runScript [toLazyByteString $ testProgram (optFlowConstraints opts) loops]
   assert (result == True)
 
 

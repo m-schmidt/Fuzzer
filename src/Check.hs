@@ -86,15 +86,10 @@ checkExpressions opts =
     shrinkExprs = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
 
 
--- |Calling convention correctly passes arguments
-conventionCorrect :: Bool -> [Signature] -> Property
-conventionCorrect ptr64 = simpleConventionCorrect ptr64 $ runTestScript "./test2.sh"
-
-
 -- |Run random tests for calling conventions
 checkConventions :: Options -> IO ()
 checkConventions opts =
-  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genSigs shrinkSigs $ conventionCorrect (optPointer64 opts)
+  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genSigs shrinkSigs $ conventionCorrect opts $ runTestScript "./test2.sh"
   where
     genSigs :: Gen [Signature]
     genSigs = genSignatureList (optChunkSize opts) (optComplexity opts)
@@ -103,15 +98,10 @@ checkConventions opts =
     shrinkSigs = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
 
 
--- |Loopbounds are correct
-loopboundCorrect :: Bool -> [Loop] -> Property
-loopboundCorrect fc = simpleLoopboundCorrect fc $ runTestScript "./test1.sh"
-
-
 -- |Run random tests for loops
 checkLoopbounds :: Options -> IO ()
 checkLoopbounds opts =
-  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genLoops shrinkLoops $ loopboundCorrect (optFlowConstraints opts)
+  quickCheckWith stdArgs { maxSuccess=optNumTests opts } $ forAllShrink genLoops shrinkLoops $ loopboundCorrect opts $ runTestScript "./test1.sh"
   where
     genLoops :: Gen [Loop]
     genLoops = genLoopList (optChunkSize opts) (optComplexity opts)

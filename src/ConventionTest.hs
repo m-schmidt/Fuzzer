@@ -2,10 +2,11 @@
 
 module ConventionTest
   ( module Convention
-  , simpleConventionCorrect
+  , conventionCorrect
   ) where
 
 import Convention
+import Commandline
 import Data.ByteString.Builder
 import Data.List (intersperse, mapAccumL)
 import Data.Monoid
@@ -16,13 +17,13 @@ import Test.QuickCheck.Monadic
 
 
 -- |Proposition that calling convention correctly passes arguments
-simpleConventionCorrect :: Bool -> ([L.ByteString] -> IO Bool) -> [Signature] -> Property
-simpleConventionCorrect p64 runScript sigs = monadicIO $ do
+conventionCorrect :: Options -> ([L.ByteString] -> IO Bool) -> [Signature] -> Property
+conventionCorrect opts runScript sigs = monadicIO $ do
   result <- run $ runScript [tst, drv]
   assert (result == True)
   where
-    tst = toLazyByteString $ testProgram p64 sigs
-    drv = toLazyByteString $ driverProgram p64 sigs
+    tst = toLazyByteString $ testProgram (optPointer64 opts) sigs
+    drv = toLazyByteString $ driverProgram (optPointer64 opts) sigs
 
 
 -- |Build program-part containing all test functions
