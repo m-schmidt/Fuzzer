@@ -45,6 +45,7 @@ codePrefix = string8 [str|
 void exit_ok(void)
 {
     __builtin_ais_annot("instruction %here assert reachable: true;");
+
     exit(EXIT_SUCCESS);
 }
 
@@ -53,6 +54,7 @@ void exit_evil(int status)
 #   ifdef ENABLE_PRINT_ERROR_STATUS
     printf("Test %d failed.\n", status);
 #   endif
+
 #   ifndef DISABLE_STATUS_MASKING
     if (status & 0xff == EXIT_SUCCESS) {
         status = EXIT_FAILURE;

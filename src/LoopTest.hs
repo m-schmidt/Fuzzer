@@ -55,6 +55,7 @@ void exit_evil(int status)
 #   ifdef ENABLE_PRINT_ERROR_STATUS
     printf("Test %d failed.\n", status);
 #   endif
+
 #   ifndef DISABLE_STATUS_MASKING
     if (status & 0xff == EXIT_SUCCESS) {
         status = EXIT_FAILURE;
