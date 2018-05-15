@@ -115,6 +115,10 @@ driverPrefix :: Builder
 driverPrefix = string8 [str|
 #include <stdlib.h>
 
+#ifndef __COMPCERT__
+# define __builtin_ais_annot(X) do {} while(0)
+#endif
+
 #define BSIZE 65536
 unsigned char data_s [BSIZE];
 
@@ -125,13 +129,17 @@ void exit_ok(void)
 
 void exit_evil(int status)
 {
-#   ifdef PRINT_STATUS
+#   ifdef ENABLE_PRINT_ERROR_STATUS
     printf("Test %d failed.\n", status);
 #   endif
-#   ifndef DONT_MASK_STATUS
+#   ifndef DISABLE_STATUS_MASKING
     if (status & 0xff == EXIT_SUCCESS) {
         status = EXIT_FAILURE;
     }
+#   endif
+
+#   ifndef DISABLE_ASSERT_REACHABLE_FALSE
+    __builtin_ais_annot("instruction %here assert reachable: false;");
 #   endif
 
     exit(status);

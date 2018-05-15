@@ -45,18 +45,24 @@ testProgramPrefix = string8 [str|
 
 void exit_ok(void)
 {
+    __builtin_ais_annot("instruction %here assert reachable: true;");
+
     exit(EXIT_SUCCESS);
 }
 
 void exit_evil(int status)
 {
-#   ifdef PRINT_STATUS
+#   ifdef ENABLE_PRINT_ERROR_STATUS
     printf("Test %d failed.\n", status);
 #   endif
-#   ifndef DONT_MASK_STATUS
+#   ifndef DISABLE_STATUS_MASKING
     if (status & 0xff == EXIT_SUCCESS) {
         status = EXIT_FAILURE;
     }
+#   endif
+
+#   ifndef DISABLE_ASSERT_REACHABLE_FALSE
+    __builtin_ais_annot("instruction %here assert reachable: false;");
 #   endif
 
     exit(status);
