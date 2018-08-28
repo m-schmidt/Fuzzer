@@ -10,7 +10,6 @@ module Loop
 
 import Test.QuickCheck
 import Data.ByteString.Builder
-import Data.Monoid
 
 
 -- |Specification for a loop

@@ -8,7 +8,6 @@ module LoopTest
 import Commandline
 import Data.ByteString.Builder
 import Data.List (intersperse)
-import Data.Monoid
 import qualified Data.ByteString.Lazy.Char8 as L
 import Loop
 import Str

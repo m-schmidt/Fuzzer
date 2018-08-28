@@ -8,7 +8,6 @@ module ExpressionTest
 import Data.Bits as Bit
 import Data.ByteString.Builder
 import Data.Maybe
-import Data.Monoid
 import Expression
 import qualified Data.ByteString.Lazy.Char8 as L
 import Str

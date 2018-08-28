@@ -9,7 +9,6 @@ import Convention
 import Commandline
 import Data.ByteString.Builder
 import Data.List (intersperse, mapAccumL)
-import Data.Monoid
 import qualified Data.ByteString.Lazy.Char8 as L
 import Str
 import Test.QuickCheck

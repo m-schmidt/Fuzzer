@@ -9,7 +9,6 @@ module Expression
 
 import Data.Bits as Bit
 import Data.ByteString.Builder
-import Data.Monoid
 import Data.Word
 import Numeric
 import qualified Data.ByteString.Lazy.Char8 as L
