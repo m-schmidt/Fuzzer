@@ -25,6 +25,13 @@ This is an experimental tool that uses QuickCheck to generate random C programs.
 
       $ stack exec fuzzer -- -t uint32 -n 100
 
+## Test Modes
+
+- Expressions, `expr`: Generate random expressions on unsigned integer types, evaluate and compare them with a precomputed result.
+
+- Calling Conventions, `conv`: Generate function calls with a random number and randomly typed arguments. The called function (in separate file) checks whether all arguments bits are passed correctlty.
+
+- Loops, `loop`: Generate random loops with known iteration count and loop bound annotations in `ais` format. Can be used to test certain static analyzers.
 
 ## Note
 
