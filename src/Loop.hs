@@ -15,7 +15,7 @@ import Data.ByteString.Builder
 -- |Specification for a loop
 data Loop = Loop
   { loopType      :: LoopType        -- ^ Type of loop
-  , counterType   :: CounterType     -- ^ Type of loop counter variable
+  , counterType   :: CounterType     -- ^ Data type of loop counter variable
   , condType      :: ConditionType   -- ^ Exit condition
   , loopStart     :: Constant        -- ^ Start value for loop counter
   , loopIncrement :: Constant        -- ^ Increment value for loop counter
@@ -128,10 +128,10 @@ instance Arbitrary Loop where
         bound <- randomLoopBound n ct `suchThat` \b -> b /= 0 || lt /= Do
         generateLoop n lt ct bound
 
-      -- generator for loops with at least one iteration
       generateLoop :: Int -> LoopType -> CounterType -> Integer -> Gen Loop
-      generateLoop _ Do  _ 0 = undefined
 
+      -- generator for loops with zero iterations
+      generateLoop _ Do  _ 0 = undefined
       generateLoop n lt ct 0 = do
         -- arbitrary start and end values for loop counter
         start <- randomCounterValue n ct
@@ -145,6 +145,7 @@ instance Arbitrary Loop where
         cte   <- randomCastType ct start increment end
         return $ Loop lt ct cond (Constant cts start) (Constant cti increment) (Constant cte end) 0
 
+      -- generator for loops with at least one iteration
       generateLoop n lt ct bound = do
         -- arbitrary start value for loop counter
         start     <- randomCounterValue n ct
