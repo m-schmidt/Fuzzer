@@ -26,7 +26,7 @@ import Test.QuickCheck
 checkExecutable :: FilePath -> IO ()
 checkExecutable path = do
     exists <- doesPathExist path
-    unless (exists) $ exitWithError $ "Error: no test scipt '" ++ path ++ "' found in present working directory."
+    unless exists $ exitWithError $ "Error: no test scipt '" ++ path ++ "' found in present working directory."
     permissions <- getPermissions path
     unless (executable permissions) $ exitWithError $ "Error: test scipt '" ++ path ++ "' is not executable."
 
@@ -83,7 +83,7 @@ checkExpressions opts =
     genExprs = genExprList (optChunkSize opts) (optComplexity opts)
 
     shrinkExprs :: (Integral a, Bits a, ExprBase a) => [Expr a] -> [[Expr a]]
-    shrinkExprs = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
+    shrinkExprs = if optEnableShrink opts then transpose . map shrink else shrinkNothing
 
 
 -- |Run random tests for calling conventions
@@ -95,7 +95,7 @@ checkConventions opts =
     genSigs = genSignatureList (optChunkSize opts) (optComplexity opts)
 
     shrinkSigs :: [Signature] -> [[Signature]]
-    shrinkSigs = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
+    shrinkSigs = if optEnableShrink opts then transpose . map shrink else shrinkNothing
 
 
 -- |Run random tests for loops
@@ -107,4 +107,4 @@ checkLoopbounds opts =
     genLoops = genLoopList (optChunkSize opts) (optComplexity opts)
 
     shrinkLoops :: [Loop] -> [[Loop]]
-    shrinkLoops = if optEnableShrink opts then (transpose . map shrink) else shrinkNothing
+    shrinkLoops = if optEnableShrink opts then transpose . map shrink else shrinkNothing

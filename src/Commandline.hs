@@ -109,12 +109,12 @@ options =
     defaultComplexity = show $ optComplexity defaultOptions
 
     convertMode :: String -> Options -> Either String Options
-    convertMode s opts = case readMaybe $ (map toUpper) s of
+    convertMode s opts = case readMaybe $ map toUpper s of
       Just m -> Right opts { optMode = m }
       _      -> Left $ "illegal mode `" ++ s ++ "'"
 
     convertType :: String -> Options -> Either String Options
-    convertType s opts = case readMaybe $ (map toUpper) s of
+    convertType s opts = case readMaybe $ map toUpper s of
       Just t -> Right opts { optExprType = t }
       _      -> Left $ "illegal data type `" ++ s ++ "'"
 
@@ -134,7 +134,7 @@ parseCommandLineOptions :: [String] -> IO Options
 parseCommandLineOptions argv =
   case getOpt Permute options argv of
     (acts, _, []) -> evalutate acts
-    (_, _, errs)  -> exitWithError $ concat (map ("Error: " ++) $ nub errs) ++ usage
+    (_, _, errs)  -> exitWithError $ concatMap ("Error: " ++) (nub errs) ++ usage
 
   where
     evalutate acts = do

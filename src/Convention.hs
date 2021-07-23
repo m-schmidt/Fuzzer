@@ -45,7 +45,7 @@ argumentByteSize p64 t = case t of
 
 
 -- |A function signature is represented by a list of its argument types
-data Signature = Signature [ArgumentType] deriving (Eq, Ord, Show)
+newtype Signature = Signature [ArgumentType] deriving (Eq, Ord, Show)
 
 
 -- |Random signatures for QuickCheck
@@ -61,4 +61,4 @@ instance Arbitrary Signature where
 
 -- |Generator for a list of expressions. The list has a fixed length `len' and each expression is sized up to `complexity'
 genSignatureList :: Int -> Int -> Gen [Signature]
-genSignatureList len complexity = (vectorOf len $ resize complexity arbitrary)
+genSignatureList len complexity = vectorOf len $ resize complexity arbitrary

@@ -46,7 +46,7 @@ data CounterType = CounterType
 -- |Smart constructor that handles the representable range according the bit width
 mkCounterType :: Bool -> Integer -> CounterType
 mkCounterType s n
- | s == True = CounterType s n (- 2^(n-1)) (2^(n-1) - 1)
+ | s         = CounterType s n (- 2^(n-1)) (2^(n-1) - 1)
  | otherwise = CounterType s n 0           (2^n - 1)
 
 
@@ -175,10 +175,10 @@ instance Arbitrary Loop where
       overflowLoop n = do
         lt    <- randomLoopType
         ct    <- mkCounterType False <$> randomBitWidth
-        let modulus = 2^(bitwidth ct)
+        let modulus = 2 ^ bitwidth ct
         let bound = 1
         start <- randomCounterValue n ct
-        delta <- randomIncrement n ct `suchThat` \i -> (i /= 0 && inRange ct (start + i))
+        delta <- randomIncrement n ct `suchThat` \i -> i /= 0 && inRange ct (start + i)
         let end = start + delta
         let increment = delta - modulus * signum delta
         cts   <- randomCastType ct start increment end
@@ -287,9 +287,9 @@ randomFailingCondition a b
 randomCastType :: CounterType -> Integer -> Integer -> Integer -> Gen CounterType
 randomCastType ct s i e = oneof [return ct, randomCounterType `suchThat` valid]
   where
-    valid ct' = (inRange ct' s) && (inRange ct' $ abs i) && (inRange ct' e)
+    valid ct' = inRange ct' s && inRange ct' (abs i) && inRange ct' e
 
 
 -- |Generator for a list of loop specifications. The list has a fixed length `len' and each loop is sized up to `complexity'
 genLoopList :: Int -> Int -> Gen [Loop]
-genLoopList len complexity = (vectorOf len $ resize complexity arbitrary)
+genLoopList len complexity = vectorOf len $ resize complexity arbitrary

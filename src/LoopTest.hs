@@ -19,7 +19,7 @@ import Test.QuickCheck.Monadic
 loopboundCorrect :: Options -> ([L.ByteString] -> IO Bool) -> [Loop] -> Property
 loopboundCorrect opts runScript loops = monadicIO $ do
   result <- run $ runScript [toLazyByteString $ testProgram (optFlowConstraints opts) loops]
-  assert (result == True)
+  assert result
 
 
 -- |Build program-part containing all test functions
@@ -153,7 +153,7 @@ testFunction fc n (Loop lt ct cond (Constant cts start) (Constant cti increment)
     updateCount             = string8 "        count = test_incr" <> intDec n <> string8 "(count);\n"
 
     -- flow annotation for separate increment routine
-    flowAnnot | fc == False = mempty
+    flowAnnot | not fc      = mempty
               | bound > 0   = string8 "    __builtin_ais_annot(\"flow sum: point(%here) == "<> integerDec bound <> string8 " point('main');\");\n"
               | otherwise   = string8 "    __builtin_ais_annot(\"try instruction %here assert reachable: false;\");\n"
 
@@ -175,4 +175,4 @@ newlineSeparated = intercalate (char8 '\n')
 
 -- |Like map but with an additional counter argument
 mapi :: (Int -> a -> b) -> [a] -> [b]
-mapi f list = map (\(i, a) -> f i a) $ zip [1..] list
+mapi f = zipWith f [1..]

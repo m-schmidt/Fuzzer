@@ -19,7 +19,7 @@ import Test.QuickCheck.Monadic
 conventionCorrect :: Options -> ([L.ByteString] -> IO Bool) -> [Signature] -> Property
 conventionCorrect opts runScript sigs = monadicIO $ do
   result <- run $ runScript [tst, drv]
-  assert (result == True)
+  assert result
   where
     tst = toLazyByteString $ testProgram (optPointer64 opts) sigs
     drv = toLazyByteString $ driverProgram (optPointer64 opts) sigs
@@ -100,7 +100,7 @@ extractBytes p64 n t =
                           <> string8 ");" : go (byte - 1)
               | otherwise = []
   in
-    newlineSeparated $ go $ (argumentByteSize p64 t) - 1
+    newlineSeparated $ go $ argumentByteSize p64 t - 1
 
 
 -- |Build program-part containing the driver function with calls to all test functions
@@ -220,11 +220,17 @@ callTestFunction p64 n (Signature args)
 
 -- |Like map but with an additional counter argument
 mapi :: (Int -> a -> b) -> [a] -> [b]
-mapi f list = map (\(i, a) -> f i a) $ zip [1..] list
+mapi f = zipWith f [1..]
+
 
 -- |Like mapAccumL map but with an additional counter argument, also the final accumulator value is ignored
 mapiAccumL_ :: (Int -> a -> b -> (a, c)) -> a -> [b] -> [c]
-mapiAccumL_ f a bs = let (_, cs) = mapAccumL (\acc (i, b) -> f i acc b) a (zip [1..] bs) in cs
+mapiAccumL_ f acc bs = snd $ mapAccumL f' acc bs'
+  where
+      bs'         = zip [1..] bs
+      f' a (i, b) = f i a b
+
+
 
 -- |Like Data.List.intercalate but by monoidal concat of Builders.
 intercalate :: Builder -> [Builder] -> Builder

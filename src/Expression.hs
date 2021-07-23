@@ -202,38 +202,38 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
           -- generators for all expression forms
           unaryExpr = UnExpr
             <$> elements [Complement, Negate]
-            <*> (expr $ n-1)
+            <*> expr (n-1)
 
           arithExpr1 = BinExpr
             <$> elements [Add, Sub, Mul]
-            <*> (expr $ n `div` 2)
-            <*> (expr $ n `div` 2)
+            <*> expr (n `div` 2)
+            <*> expr (n `div` 2)
 
           arithExpr2 = BinExpr
             <$> elements [Div, Mod]
-            <*> (expr $ n `div` 2)
-            <*> (expr $ n `div` 2) `suchThat` ((/= Just 0) . eval)
+            <*> expr (n `div` 2)
+            <*> expr (n `div` 2) `suchThat` ((/= Just 0) . eval)
 
           shiftExpr = BinExpr
             <$> elements [Shl, Shr]
-            <*> (expr $ n `div` 2)
+            <*> expr (n `div` 2)
             <*> oneof [immAmount, mkVar <$> immAmount]
 
           bitExpr = BinExpr
             <$> elements [And, Or, Xor]
-            <*> (expr $ n `div` 2)
-            <*> (expr $ n `div` 2)
+            <*> expr (n `div` 2)
+            <*> expr (n `div` 2)
 
           condExpr = CondExpr
             <$> elements [Equal, NotEqual, LessThan, GreaterThan, LessOrEqual, GreaterOrEqual]
-            <*> (expr $ n `div` 3)
-            <*> (expr $ n `div` 3)
-            <*> (expr $ n-1)
-            <*> (expr $ n-1)
+            <*> expr (n `div` 3)
+            <*> expr (n `div` 3)
+            <*> expr (n-1)
+            <*> expr (n-1)
 
   -- |Shrink an expression into smaller expressions
   shrink expr = filter ((/= Nothing) . eval) $ case expr of
-    UnExpr o e             -> [e] ++ [UnExpr o e' | e' <- shrink e]
+    UnExpr o e             -> e : [UnExpr o e' | e' <- shrink e]
     BinExpr o e1 e2        -> [e1, e2] ++ [BinExpr o e1' e2' | (e1', e2') <- shrink (e1, e2)]
     CondExpr o e1 e2 e3 e4 -> [e1, e2, e3, e4] ++ [CondExpr o e1' e2' e3' e4' | (e1', e2', e3', e4') <- shrink (e1, e2, e3, e4)]
     _                      -> []
@@ -241,4 +241,4 @@ instance (Integral a, Bits a, ExprBase a) => Arbitrary (Expr a) where
 
 -- |Generator for a list of expressions. The list has a fixed length `len' and each expression is sized up to `complexity'
 genExprList :: (Integral a, Bits a, ExprBase a) => Int -> Int -> Gen [Expr a]
-genExprList len complexity = (vectorOf len $ resize complexity arbitrary)
+genExprList len complexity = vectorOf len $ resize complexity arbitrary

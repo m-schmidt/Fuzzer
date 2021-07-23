@@ -19,7 +19,7 @@ import Test.QuickCheck.Monadic
 evalExpressionCorrect :: (Integral a, Bits a, ExprBase a) => ([L.ByteString] -> IO Bool) -> [Expr a] -> Property
 evalExpressionCorrect runScript el = monadicIO $ do
   result <- run $ runScript . genCode $ el
-  assert (result == True)
+  assert result
 
 
 -- |Generate a C code that tests evaluation of the given expression

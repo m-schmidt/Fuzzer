@@ -7,11 +7,11 @@ import System.IO.Error
 
 -- |Report message to stderr
 report :: String -> IO ()
-report message = hPutStrLn stderr message
+report = hPutStrLn stderr
 
 -- |Report info messages and terminate the program
 exitWithInfo :: String -> IO a
-exitWithInfo message = do report message; exitWith ExitSuccess
+exitWithInfo message = do report message; exitSuccess
 
 -- |Report error messages and terminate the program
 exitWithError :: String -> IO a
