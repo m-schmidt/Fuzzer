@@ -41,6 +41,14 @@ codePrefix = string8 [str|
 # define __builtin_ais_annot(X) do {} while(0)
 #endif
 
+#ifdef CVAL_BARE_METAL
+
+// Valid bare metal mode - functions provided by startup code
+void exit_ok(void);
+void exit_evil(int status);
+
+#else
+
 void exit_ok(void)
 {
     __builtin_ais_annot("instruction %here assert reachable: true;");
@@ -66,6 +74,7 @@ void exit_evil(int status)
 
     exit(status);
 }
+#endif // CVAL_BARE_METAL
 |]
 
 
