@@ -75,6 +75,7 @@ void exit_evil(int status)
     exit(status);
 }
 #endif // CVAL_BARE_METAL
+
 |]
 
 
